@@ -7,7 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-using NENESEmulatorMacro;
+using NESEmulatorMacro;
 
 namespace NESEmulator {
 /// <summary>
@@ -32,40 +32,49 @@ namespace NESEmulator {
 		public PRG_ROM1_ADDR = 0xC000;
 		public PRG_ROM2_ADDR = 0x10000;
 	//ppu control register($2000 ~ $2007)
-		public PPUCNT0 = 0;//control0
-		public PPUCNT1 = 1;//control1
-		public PPUSTAT = 2;//status
-		public SPRADDR = 3;//sprite memory addr
-		public SPRIO = 4;//sprite io
-		public BGSCROL = 5;//bg scroll
-		public PPUADDR = 6;//ppu memory addr
-		public PPUIO = 7;//ppu io 
+		public enum PPU_CONTROL : int {
+			| CONTROL1
+			| CONTROL2
+			| STATUS
+			| SPRITE_ADDR
+			| SPRITE_IO
+			| BG_SCROLL
+			| MEMORY_ADDR
+			| IO_REGISTER
+		};
 	//apu control register($4000 ~ $4017)
-		public WRSQ1CNT1 = 0;//write square 1
-		public WRSQ1CNT2 = 1;
-		public WRSQ1TIM1 = 2;//freq1
-		public WRSQ1TIM2 = 3;//freq2
-		public WRSQ2CNT1 = 4;//write square 1
-		public WRSQ2CNT2 = 5;
-		public WRSQ2TIM1 = 6;//freq1
-		public WRSQ2TIM2 = 7;//freq2
-		public WRTRICNT1 = 8;//write triangle
-		public WRTRICNT2 = 9;//dont care
-		public WRTRITIM1 = 10;
-		public WRTRITIM2 = 11;
-		public WRNOISECNT1 = 12;//noise
-		public WRNOISECNT2 = 13;
-		public WRNOISETIM1 = 14;
-		public WRNOISETIM2 = 15;
-		public PCMCNT = 16;
-		public PCMVOLUME = 17;
-		public PCMADDR = 18;
-		public PCMLENGTH = 19;
-		public SPRDMA = 20;//sprite dma(転送)
-		public SNDCNT = 21;//sound control
-		public SPECIO1 = 22;//joypad 1
-		public SPECIO2 = 23;//joypad 2
+		public enum APU_CONTROL : int {
+			| WRITE_SQUARE_1_CONTROL_1
+			| WRITE_SQUARE_1_CONTROL_2
+			| WRITE_SQUARE_1_TIMER_1
+			| WRITE_SQUARE_1_TIMER_2
 
+			| WRITE_SQUARE_2_CONTROL_1
+			| WRITE_SQUARE_2_CONTROL_2
+			| WRITE_SQUARE_2_TIMER_1
+			| WRITE_SQUARE_2_TIMER_2
+
+			| WRITE_TRIANGLE_CONTROL_1
+			| WRITE_TRIANGLE_CONTROL_2
+			| WRITE_TRIANGLE_TIMER_1
+			| WRITE_TRIANGLE_TIMER_2
+
+			| WRITE_NOISE_CONTROL_1
+			| WRITE_NOISE_CONTROL_2
+			| WRITE_NOISE_TIMER_1
+			| WRITE_NOISE_TIMER_2
+
+			| PCM_CONTROL
+			| PCM_VOLUME
+			| PCM_ADDR
+			| PCM_LENGTH
+
+			| SPRITE_DMA
+			| SOUND_CONTROL
+
+			| SPECIO_1
+			| SPECIO_2
+		};
 
 		private wram  : array[byte] = array(WRAM_SIZE);
 		private ppuio : array[byte] = array(PPU_IO_SIZE);
@@ -89,9 +98,10 @@ namespace NESEmulator {
 
 		public Read(addr:int) : byte {
 			| _ when addr < WRAM_MIRROR_ADDR => wram[addr % WRAM_SIZE];
-			| _ when addr < PPU_IO_MIRROR => ppuio[addr - WRAM_MIRROR_ADDR];
-			| _ when addr < APU_PAD_IO_ADDR => match(addr - PPU_IO_MIRROR) {
-					//TODO:Sound here
+			| _ when addr < PPU_IO_MIRROR => match((addr - WRAM_MIRROR_ADDR) :> PPU_CONTROL) {
+						| _ => ppuio[addr - WRAM_MIRROR_ADDR];
+					}			
+			| _ when addr < APU_PAD_IO_ADDR => match((addr - PPU_IO_MIRROR) :> APU_CONTROL) {
 						| _ => 0x40;
 					}
 			| _ when addr < EXTEND_ROM_ADDR => 0//EXROMは未実装
@@ -99,17 +109,22 @@ namespace NESEmulator {
 			| _ when addr < PRG_ROM1_ADDR => rom1[addr - EXTEND_RAM_ADDR];
 			| _ => rom2[addr - PRG_ROM2_ADDR];
 		}
-		public Read(addr:int,data:byte) : void {
+		public Write(addr:int,data:byte) : void {
 			| _ when addr < WRAM_MIRROR_ADDR => wram[addr % WRAM_SIZE] = data;
-			| _ when addr < PPU_IO_MIRROR => ppuio[addr - WRAM_MIRROR_ADDR] = data;
-			//| _ when addr < APU_PAD_IO_ADDR => match(addr - PPU_IO_MIRROR) {
-			//		//TODO:Sound here
-			//			| _ => 0x40;
-			//		}
-			//| _ when addr < EXTEND_ROM_ADDR => 0//EXROMは未実装
-			//| _ when addr < EXTEND_RAM_ADDR => exram[addr - EXTEND_ROM_ADDR];
-			//| _ when addr < PRG_ROM1_ADDR => rom1[addr - EXTEND_RAM_ADDR];
-			//| _ => rom2[addr - PRG_ROM2_ADDR];
+			| _ when addr < PPU_IO_MIRROR => match((addr - WRAM_MIRROR_ADDR) :> PPU_CONTROL) {
+						| _ => ppuio[addr - WRAM_MIRROR_ADDR] = data;
+					}
+			| _ when addr < APU_PAD_IO_ADDR => match((addr - PPU_IO_MIRROR) :> APU_CONTROL) {
+						| SPRITE_DMA => {
+						//TODO:Copy RAM -> SPRITE_RAM
+								()
+							}
+						| _ => ();
+					}
+			| _ when addr < EXTEND_ROM_ADDR => ()//ROM
+			| _ when addr < EXTEND_RAM_ADDR => exram[addr - EXTEND_ROM_ADDR] = data;
+			| _ when addr < PRG_ROM1_ADDR => ();
+			| _ => ();
 		}
 	}
 }
