@@ -15,22 +15,22 @@ namespace NESEmulator {
 /// </summary>
 	class Memory {
 	//ram/rom size
-		public WRAM_SIZE = 0x0800;
-		public PPU_IO_SIZE = 0x0008;
-		public APU_PAD_IO_SIZE = 0x0020;
-		public EXTEND_ROM_SIZE = 0x1fe0;
-		public EXTEND_RAM_SIZE = 0x2000;
-		public PRG_ROM_SIZE = 0x4000;
+		public static WRAM_SIZE = 0x0800;
+		public static PPU_IO_SIZE = 0x0008;
+		public static APU_PAD_IO_SIZE = 0x0020;
+		public static EXTEND_ROM_SIZE = 0x1fe0;
+		public static EXTEND_RAM_SIZE = 0x2000;
+		public static PRG_ROM_SIZE = 0x4000;
 	//end addr
-		public WRAM_ADDR = 0x0800;
-		public WRAM_MIRROR_ADDR = 0x2000;
-		public PPU_IO_ADDR = 0x2008;
-		public PPU_IO_MIRROR = 0x4000;
-		public APU_PAD_IO_ADDR = 0x4020;
-		public EXTEND_ROM_ADDR = 0x6000;
-		public EXTEND_RAM_ADDR = 0x8000;
-		public PRG_ROM1_ADDR = 0xC000;
-		public PRG_ROM2_ADDR = 0x10000;
+		public static WRAM_ADDR = 0x0800;
+		public static WRAM_MIRROR_ADDR = 0x2000;
+		public static PPU_IO_ADDR = 0x2008;
+		public static PPU_IO_MIRROR = 0x4000;
+		public static APU_PAD_IO_ADDR = 0x4020;
+		public static EXTEND_ROM_ADDR = 0x6000;
+		public static EXTEND_RAM_ADDR = 0x8000;
+		public static PRG_ROM1_ADDR = 0xC000;
+		public static PRG_ROM2_ADDR = 0x10000;
 	//ppu control register($2000 ~ $2007)
 		public enum PPU_CONTROL : int {
 			| CONTROL1
@@ -98,21 +98,21 @@ namespace NESEmulator {
 
 		public Read(addr:int) : byte {
 			| _ when addr < WRAM_MIRROR_ADDR => wram[addr % WRAM_SIZE];
-			| _ when addr < PPU_IO_MIRROR => match((addr - WRAM_MIRROR_ADDR) :> PPU_CONTROL) {
-						| _ => ppuio[addr - WRAM_MIRROR_ADDR];
-					}			
+			| _ when addr < PPU_IO_MIRROR => match(((addr - WRAM_MIRROR_ADDR) % PPU_IO_SIZE) :> PPU_CONTROL) {
+						| _ => ppuio[(addr - WRAM_MIRROR_ADDR)  % PPU_IO_SIZE];
+					}
 			| _ when addr < APU_PAD_IO_ADDR => match((addr - PPU_IO_MIRROR) :> APU_CONTROL) {
 						| _ => 0x40;
 					}
 			| _ when addr < EXTEND_ROM_ADDR => 0//EXROMは未実装
 			| _ when addr < EXTEND_RAM_ADDR => exram[addr - EXTEND_ROM_ADDR];
 			| _ when addr < PRG_ROM1_ADDR => rom1[addr - EXTEND_RAM_ADDR];
-			| _ => rom2[addr - PRG_ROM2_ADDR];
+			| _ => rom2[addr - PRG_ROM1_ADDR];
 		}
 		public Write(addr:int,data:byte) : void {
 			| _ when addr < WRAM_MIRROR_ADDR => wram[addr % WRAM_SIZE] = data;
-			| _ when addr < PPU_IO_MIRROR => match((addr - WRAM_MIRROR_ADDR) :> PPU_CONTROL) {
-						| _ => ppuio[addr - WRAM_MIRROR_ADDR] = data;
+			| _ when addr < PPU_IO_MIRROR => match(((addr - WRAM_MIRROR_ADDR) % PPU_IO_SIZE) :> PPU_CONTROL) {
+						| _ => ppuio[(addr - WRAM_MIRROR_ADDR)  % PPU_IO_SIZE] = data;
 					}
 			| _ when addr < APU_PAD_IO_ADDR => match((addr - PPU_IO_MIRROR) :> APU_CONTROL) {
 						| SPRITE_DMA => {
@@ -124,7 +124,7 @@ namespace NESEmulator {
 			| _ when addr < EXTEND_ROM_ADDR => ()//ROM
 			| _ when addr < EXTEND_RAM_ADDR => exram[addr - EXTEND_ROM_ADDR] = data;
 			| _ when addr < PRG_ROM1_ADDR => ();
-			| _ => ();
+			| _ => ();//rom2
 		}
 	}
 }

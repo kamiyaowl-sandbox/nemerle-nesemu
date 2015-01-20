@@ -12,14 +12,22 @@ using NESEmulatorMacro;
 
 namespace NESEmulator
 {
-  public class NESRenderer {
-	public Setup() : void {}
-	public Calculate() : void {
+	public class NESRenderer {
+		public Setup() : void {
+			def mem = Memory();
+			mem.Reset();
+			foreach(i in [0,Memory.WRAM_ADDR,Memory.WRAM_MIRROR_ADDR,Memory.PPU_IO_ADDR,Memory.PPU_IO_MIRROR,Memory.APU_PAD_IO_ADDR,Memory.EXTEND_ROM_ADDR,Memory.EXTEND_RAM_ADDR,Memory.PRG_ROM1_ADDR,Memory.PRG_ROM2_ADDR - 1]){
+				mem.Write(i,0xff);
+				def read = mem.Read(i);
+				Console.WriteLine($"$i = $read");
+			}
+		}
+		public Calculate() : void {
+		}
+		public Update() : void {
+			_ = DrawString(10,100,"from Nemerle",GetColor(0xff,0,0));
+		}
+		public Exit() : void {};
+		public IsEnd() : bool { dx -> CheckHitKey(KEY_INPUT_ESCAPE); }
 	}
-	public Update() : void {
-		_ = DrawString(10,100,"from Nemerle",GetColor(0xff,0,0));
-	}
-	public Exit() : void {};
-	public IsEnd() : bool { dx -> CheckHitKey(KEY_INPUT_ESCAPE); }
-  }
 }
