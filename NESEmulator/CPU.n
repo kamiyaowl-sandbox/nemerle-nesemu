@@ -20,6 +20,23 @@ namespace NESEmulator{
 		//program counter
 		public PC : byte {get; set;}
 
+		public Mem : Memory {get; set;}
+
+		public Initialize() : void {
+			A = 0x0;
+			X = 0x0;
+			Y = 0x0;
+			S = 0x0;
+			P = 0x0;
+			PC = 0x0;
+		}
+
+		public variant Address {
+			| None
+			| Accumelator
+			| Relative
+			| Data { addr : int}
+		};
 		public variant Addressing {
 			| Accumulator//on Accumulator
 			| Immediate//op1 is data
@@ -106,16 +123,6 @@ namespace NESEmulator{
 			| NOP //none
 
 		};
-
-		public Initialize() : void {
-			A = 0x0;
-			X = 0x0;
-			Y = 0x0;
-			S = 0x0;
-			P = 0x0;
-			PC = 0x0;
-		}
-
 		public Convert(code : byte) : OPCode {
 			| 0x69 => OPCode.ADC(Addressing.Immediate());
 			| 0x65 => OPCode.ADC(Addressing.ZeroPage());
@@ -227,7 +234,7 @@ namespace NESEmulator{
 			| 0xf6 => OPCode.INC(Addressing.IndexedZeroPageX());
 			| 0xee => OPCode.INC(Addressing.Absolute());
 			| 0xfe => OPCode.INC(Addressing.IndexedAbsoluteX());
-	
+
 			| 0xc6 => OPCode.DEC(Addressing.ZeroPage());
 			| 0xd6 => OPCode.DEC(Addressing.IndexedZeroPageX());
 			| 0xce => OPCode.DEC(Addressing.Absolute());
@@ -282,7 +289,7 @@ namespace NESEmulator{
 			| 0x84 => OPCode.STY(Addressing.ZeroPage());
 			| 0x94 => OPCode.STY(Addressing.IndexedZeroPageX());
 			| 0x8c => OPCode.STY(Addressing.Absolute());
-			
+
 			| 0xaa => OPCode.TAX();
 			| 0x8a => OPCode.TXA();
 			| 0xa8 => OPCode.TAY();
@@ -296,10 +303,37 @@ namespace NESEmulator{
 			| 0x28 => OPCode.PLP();
 
 			| 0xea => OPCode.NOP();
-	
+
+		}
+		public ReadAddr(addr:Addressing) : Address {
+				//Aレジスタの値をそのまま参照してね
+			| Addressing.Accumulator => Address.Accumelator();
+				//PCの即値を適用(PCを進めとく)
+			| Addressing.Immediate => { def x = PC ; PC++ ; Address.Data(x)}
+				//下位アドレス
+			| Addressing.ZeroPage => { def x = Mem.Read(PC) ; PC++ ; Address.Data(x) }
+			| Addressing.IndexedZeroPageX => { def x = Mem.Read(PC) + X ; PC++ ; Address.Data(x) }
+			| Addressing.IndexedZeroPageY => { def x = Mem.Read(PC) + Y ; PC++ ; Address.Data(x) }
+				//下位アドレス, 上位アドレス
+			| Addressing.Absolute => { def x = Mem.Read(PC) | (Mem.Read(PC + 1) << 8); PC += 2; Address.Data(x) }
+			| Addressing.IndexedAbsoluteX => { def x = Mem.Read(PC) | (Mem.Read(PC + 1) << 8) + X; PC += 2; Address.Data(x) }
+			| Addressing.IndexedAbsoluteY => { def x = Mem.Read(PC) | (Mem.Read(PC + 1) << 8) + Y; PC += 2; Address.Data(x) }
+				//使わない
+			| Addressing.Implied => Address.None();
+			| Addressing.Relative => Address.Relative();
+				//(下位アドレス先 + X)のアドレス先(下位ビット) とその先1byte(上位ビット)
+			| Addressing.IndexedIndirectX => { def pt = Mem.Read(PC) + X; def x = Mem.Read(pt) | (Mem.Read(pt + 1) << 8) ; PC++ ;  Address.Data(x) }
+				//下位アドレス先のアドレス先(下位ビット) とその先1byte(上位ビット) にYを加算
+			| Addressing.IndexedIndirectY => { def pt = Mem.Read(PC); def x = (Mem.Read(pt) | (Mem.Read(pt + 1) << 8)) + Y ; PC++ ;  Address.Data(x) }
+				//TODO:Absoluteとどう違うかわからん
+			| Addressing.Absolute => { def x = Mem.Read(PC) | (Mem.Read(PC + 1) << 8); PC += 2; Address.Data(x) }
+
+			| _ => throw Exception();
+
 		}
 		public Execute(opcode : OPCode) : void {
 		}
+
 	}
 
 }
