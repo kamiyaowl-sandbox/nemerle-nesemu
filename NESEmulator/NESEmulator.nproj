@@ -70,6 +70,9 @@
     <Compile Include="Main.n">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="Memory.n">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="NESRenderer.n">
       <SubType>Code</SubType>
     </Compile>

@@ -1,0 +1,115 @@
+﻿using Nemerle;
+using Nemerle.Collections;
+using Nemerle.Text;
+using Nemerle.Utility;
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+using NENESEmulatorMacro;
+
+namespace NESEmulator {
+/// <summary>
+/// Description of Memory.
+/// </summary>
+	class Memory {
+	//ram/rom size
+		public WRAM_SIZE = 0x0800;
+		public PPU_IO_SIZE = 0x0008;
+		public APU_PAD_IO_SIZE = 0x0020;
+		public EXTEND_ROM_SIZE = 0x1fe0;
+		public EXTEND_RAM_SIZE = 0x2000;
+		public PRG_ROM_SIZE = 0x4000;
+	//end addr
+		public WRAM_ADDR = 0x0800;
+		public WRAM_MIRROR_ADDR = 0x2000;
+		public PPU_IO_ADDR = 0x2008;
+		public PPU_IO_MIRROR = 0x4000;
+		public APU_PAD_IO_ADDR = 0x4020;
+		public EXTEND_ROM_ADDR = 0x6000;
+		public EXTEND_RAM_ADDR = 0x8000;
+		public PRG_ROM1_ADDR = 0xC000;
+		public PRG_ROM2_ADDR = 0x10000;
+	//ppu control register($2000 ~ $2007)
+		public PPUCNT0 = 0;//control0
+		public PPUCNT1 = 1;//control1
+		public PPUSTAT = 2;//status
+		public SPRADDR = 3;//sprite memory addr
+		public SPRIO = 4;//sprite io
+		public BGSCROL = 5;//bg scroll
+		public PPUADDR = 6;//ppu memory addr
+		public PPUIO = 7;//ppu io 
+	//apu control register($4000 ~ $4017)
+		public WRSQ1CNT1 = 0;//write square 1
+		public WRSQ1CNT2 = 1;
+		public WRSQ1TIM1 = 2;//freq1
+		public WRSQ1TIM2 = 3;//freq2
+		public WRSQ2CNT1 = 4;//write square 1
+		public WRSQ2CNT2 = 5;
+		public WRSQ2TIM1 = 6;//freq1
+		public WRSQ2TIM2 = 7;//freq2
+		public WRTRICNT1 = 8;//write triangle
+		public WRTRICNT2 = 9;//dont care
+		public WRTRITIM1 = 10;
+		public WRTRITIM2 = 11;
+		public WRNOISECNT1 = 12;//noise
+		public WRNOISECNT2 = 13;
+		public WRNOISETIM1 = 14;
+		public WRNOISETIM2 = 15;
+		public PCMCNT = 16;
+		public PCMVOLUME = 17;
+		public PCMADDR = 18;
+		public PCMLENGTH = 19;
+		public SPRDMA = 20;//sprite dma(転送)
+		public SNDCNT = 21;//sound control
+		public SPECIO1 = 22;//joypad 1
+		public SPECIO2 = 23;//joypad 2
+
+
+		private wram  : array[byte] = array(WRAM_SIZE);
+		private ppuio : array[byte] = array(PPU_IO_SIZE);
+		private apuio : array[byte] = array(APU_PAD_IO_SIZE);
+	//exrom
+		private exram  : array[byte] = array(EXTEND_RAM_SIZE);
+		private rom1   : array[byte] = array(PRG_ROM_SIZE);
+		private rom2   : array[byte] = array(PRG_ROM_SIZE);
+	//TODO:
+	//VRAM
+	//SPRITE_RAM
+	//
+		public Reset() : void {
+			Array.Clear(wram,0,wram.Length);
+			Array.Clear(ppuio,0,ppuio.Length);
+			Array.Clear(apuio,0,apuio.Length);
+			Array.Clear(exram,0,exram.Length);
+			Array.Clear(rom1,0,rom1.Length);
+			Array.Clear(rom2,0,rom2.Length);
+		}
+
+		public Read(addr:int) : byte {
+			| _ when addr < WRAM_MIRROR_ADDR => wram[addr % WRAM_SIZE];
+			| _ when addr < PPU_IO_MIRROR => ppuio[addr - WRAM_MIRROR_ADDR];
+			| _ when addr < APU_PAD_IO_ADDR => match(addr - PPU_IO_MIRROR) {
+					//TODO:Sound here
+						| _ => 0x40;
+					}
+			| _ when addr < EXTEND_ROM_ADDR => 0//EXROMは未実装
+			| _ when addr < EXTEND_RAM_ADDR => exram[addr - EXTEND_ROM_ADDR];
+			| _ when addr < PRG_ROM1_ADDR => rom1[addr - EXTEND_RAM_ADDR];
+			| _ => rom2[addr - PRG_ROM2_ADDR];
+		}
+		public Read(addr:int,data:byte) : void {
+			| _ when addr < WRAM_MIRROR_ADDR => wram[addr % WRAM_SIZE] = data;
+			| _ when addr < PPU_IO_MIRROR => ppuio[addr - WRAM_MIRROR_ADDR] = data;
+			//| _ when addr < APU_PAD_IO_ADDR => match(addr - PPU_IO_MIRROR) {
+			//		//TODO:Sound here
+			//			| _ => 0x40;
+			//		}
+			//| _ when addr < EXTEND_ROM_ADDR => 0//EXROMは未実装
+			//| _ when addr < EXTEND_RAM_ADDR => exram[addr - EXTEND_ROM_ADDR];
+			//| _ when addr < PRG_ROM1_ADDR => rom1[addr - EXTEND_RAM_ADDR];
+			//| _ => rom2[addr - PRG_ROM2_ADDR];
+		}
+	}
+}
