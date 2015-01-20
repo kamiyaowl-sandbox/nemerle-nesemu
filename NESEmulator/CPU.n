@@ -20,6 +20,86 @@ namespace NESEmulator{
 		//program counter
 		public PC : byte {get; set;}
 
+		public variant Addressing {
+			| Accumulator
+			| Immediate
+			| Absolute
+			| ZeroPage
+			| IndexedZeroPage
+			| IndexedAbsolute
+			| Implied //nc address
+			| Relative
+			| IndexedIndirect
+			| IndirectIndexed
+			| AbsoluteIndirect
+		};
+
+		public variant OPCode {
+			| LDA { addr:Addressing }
+			| LDX { addr:Addressing }
+			| LDY { addr:Addressing }
+			| STX { addr:Addressing }
+			| STY { addr:Addressing }
+
+			| TXA
+			| TYA
+			| TXS
+			| TAY
+			| TAX
+			| TSX
+
+			| PHP
+			| PLP
+			| PHA
+			| PLA
+
+			| ADC { addr:Addressing }
+			| SBC { addr:Addressing }
+
+			| CMP { addr:Addressing }//a
+			| CMX { addr:Addressing }
+			| CMY { addr:Addressing }
+
+			| AND { addr:Addressing }//a
+			| EOR { addr:Addressing }//a
+			| ORA { addr:Addressing }//a
+			| BIT { addr:Addressing }//and a
+			| ASL { addr:Addressing }//a <<
+			| LSR { addr:Addressing }//a >>
+			| ROL { addr:Addressing }// << rotate
+			| ROR { addr:Addressing }// >> rotate
+
+			| INC { addr:Addressing }//a
+			| INX
+			| INY
+			| DEC { addr:Addressing }//a
+			| DEX
+			| DEY
+
+			| CLC // clear c
+			| CLI // clear i
+			| CLV // clear v
+			| CLD // clear d
+
+			| SEC // set c
+			| SEI // set i
+			| SED // set d
+
+			| NOP //none
+			| BRK //software interrupt
+			| JMP { addr:Addressing }
+			| JSR //call subroutine
+			| RTS //return subroutine
+			| RTI //return interrupt
+			| BPL //jump if +
+			| BMI //jump if -
+			| BVC //no ovf jump
+			| BVS //ovf jump
+			| BCC //no carry jump
+			| BCS //carry jump
+			| BNE // != jump
+			| BEQ // == jump
+		};
 		public Initialize() : void {
 			A = 0x0;
 			X = 0x0;
@@ -27,7 +107,6 @@ namespace NESEmulator{
 			S = 0x0;
 			P = 0x0;
 			PC = 0x0;
-
 		}
 	}
 
