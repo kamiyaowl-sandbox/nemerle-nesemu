@@ -1,0 +1,59 @@
+﻿using Nemerle;
+using Nemerle.Collections;
+using Nemerle.Text;
+using Nemerle.Utility;
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+using DxLibDLL;
+using DxLibDLL.DX;
+using NESEmulatorMacro;
+
+namespace NESEmulator
+{
+  /// <summary>
+  /// Description of Main.
+  /// </summary>
+  class Main
+  {
+	static Main() : void {
+		def game = NESRenderer();
+		_ = ChangeWindowMode(dx <- true);
+		when(DxLib_Init() == -1){
+			throw System.PlatformNotSupportedException();
+		}
+		_ = SetDrawScreen(DX_SCREEN_BACK);
+		_ = SetAlwaysRunFlag(dx <- true);
+		_ = SetWindowText("NES Emu");
+
+		game.Setup();
+
+		def fps = 60;
+		def duration = 1000 / fps;
+		mutable idealNextTick = 0;
+		mutable fpsCount = 0;
+		mutable fpsCalcTick = 0;
+		mutable currentFps = 0.0f;
+		while(!(dx -> ProcessMessage()) && !(dx -> ClearDrawScreen()) && !game.IsEnd()){
+			fpsCount += 1;
+			when(fpsCount > fps){
+				currentFps = fps * 1000 / (GetNowCount() - fpsCalcTick :> float);
+				fpsCalcTick = GetNowCount();
+				fpsCount = 0;
+			}
+			game.Calculate();
+			_ = DrawString(10, 10, $"FPS = $currentFps", GetColor(0xff,0xff,0xff));
+			game.Update();
+
+			_ = ScreenFlip();
+			when(GetNowCount() < idealNextTick){
+				_ = WaitTimer(idealNextTick - GetNowCount());
+			}
+			idealNextTick = GetNowCount() + duration;
+
+		}
+	}
+  }
+}

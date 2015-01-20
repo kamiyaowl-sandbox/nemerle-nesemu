@@ -3,7 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
 VisualStudioVersion = 12.0.31101.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "nesemu", "nesemu\nesemu.csproj", "{4D5D6B11-9A08-49BB-A5C7-CCE1A02296B1}"
+Project("{EDCC3B85-0BAD-11DB-BC1A-00112FDE8B61}") = "NESEmulator", "NESEmulator\NESEmulator.nproj", "{AF0E5D45-0E79-4EBC-A93C-4618B14354EC}"
+EndProject
+Project("{EDCC3B85-0BAD-11DB-BC1A-00112FDE8B61}") = "NESEmulatorMacro", "NESEmulatorMacro\NESEmulatorMacro.nproj", "{B22CF889-A548-4E0A-8838-5CBC53AE94AA}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -11,10 +13,14 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{4D5D6B11-9A08-49BB-A5C7-CCE1A02296B1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{4D5D6B11-9A08-49BB-A5C7-CCE1A02296B1}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{4D5D6B11-9A08-49BB-A5C7-CCE1A02296B1}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{4D5D6B11-9A08-49BB-A5C7-CCE1A02296B1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AF0E5D45-0E79-4EBC-A93C-4618B14354EC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AF0E5D45-0E79-4EBC-A93C-4618B14354EC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AF0E5D45-0E79-4EBC-A93C-4618B14354EC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AF0E5D45-0E79-4EBC-A93C-4618B14354EC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B22CF889-A548-4E0A-8838-5CBC53AE94AA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B22CF889-A548-4E0A-8838-5CBC53AE94AA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B22CF889-A548-4E0A-8838-5CBC53AE94AA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B22CF889-A548-4E0A-8838-5CBC53AE94AA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
