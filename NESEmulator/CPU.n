@@ -17,7 +17,7 @@ namespace NESEmulator{
 		//stack ptr
 		mutable S : byte;
 		//program counter
-		mutable PC : byte;
+		mutable PC : ushort;
 		//status register
 		mutable SP : byte;
 
@@ -37,7 +37,7 @@ namespace NESEmulator{
 			| None
 			| Accumelator
 			| Relative
-			| Data { addr : int}
+			| Data { addr : ushort }
 		};
 		public variant Addressing {
 			| Accumulator//on Accumulator
@@ -315,27 +315,27 @@ namespace NESEmulator{
 				//PCの即値を適用(PCを進めとく)
 			| Addressing.Immediate => { def x = PC ; PC++ ; Address.Data(x)}
 				//下位アドレス
-			| Addressing.ZeroPage => { def x = Mem.Read(PC) ; PC++ ; Address.Data(x) }
-			| Addressing.IndexedZeroPageX => { def x = Mem[PC] + X ; PC++ ; Address.Data(x) }
-			| Addressing.IndexedZeroPageY => { def x = Mem[PC] + Y ; PC++ ; Address.Data(x) }
+			| Addressing.ZeroPage => { def x : byte = Mem.Read(PC) ; PC++ ; Address.Data(x) }
+			| Addressing.IndexedZeroPageX => { def x : byte = Mem[PC] + X ; PC++ ; Address.Data(x) }
+			| Addressing.IndexedZeroPageY => { def x : byte = Mem[PC] + Y ; PC++ ; Address.Data(x) }
 				//下位アドレス, 上位アドレス
-			| Addressing.Absolute => { def x = Mem.Read(PC) | (Mem[PC + 1] << 8); PC += 2; Address.Data(x) }
-			| Addressing.IndexedAbsoluteX => { def x = Mem[PC] | (Mem[PC + 1] << 8) + X; PC += 2; Address.Data(x) }
-			| Addressing.IndexedAbsoluteY => { def x = Mem[PC] | (Mem[PC + 1] << 8) + Y; PC += 2; Address.Data(x) }
+			| Addressing.Absolute => { def x : ushort = Mem.Read(PC) | (Mem[PC + 1] << 8); PC += 2; Address.Data(x) }
+			| Addressing.IndexedAbsoluteX => { def x : ushort = Mem[PC] | (Mem[PC + 1] << 8) + X; PC += 2; Address.Data(x) }
+			| Addressing.IndexedAbsoluteY => { def x : ushort = Mem[PC] | (Mem[PC + 1] << 8) + Y; PC += 2; Address.Data(x) }
 				//使わない
 			| Addressing.Implied => Address.None();
 			| Addressing.Relative => Address.Relative();
 				//(下位アドレス先 + X)のアドレス先(下位ビット) とその先1byte(上位ビット)
-			| Addressing.IndexedIndirectX => { def pt = Mem[PC] + X; def x = Mem[pt] | (Mem[pt + 1] << 8) ; PC++ ;  Address.Data(x) }
+			| Addressing.IndexedIndirectX => { def pt : ushort = Mem[PC] + X; def x  : ushort = Mem[pt] | (Mem[pt + 1] << 8) ; PC++ ;  Address.Data(x) }
 				//下位アドレス先のアドレス先(下位ビット) とその先1byte(上位ビット) にYを加算
-			| Addressing.IndexedIndirectY => { def pt = Mem[PC]; def x = (Mem[pt] | (Mem[pt + 1] << 8)) + Y ; PC++ ;  Address.Data(x) }
+			| Addressing.IndexedIndirectY => { def pt : ushort = Mem[PC]; def x : ushort= (Mem[pt] | (Mem[pt + 1] << 8)) + Y ; PC++ ;  Address.Data(x) }
 				//TODO:Absoluteとどう違うかわからん
-			| Addressing.AbsoluteIndirect => { def x = Mem[PC] | (Mem[PC + 1] << 8); PC += 2; Address.Data(x) }
+			| Addressing.AbsoluteIndirect => { def x : ushort = Mem[PC] | (Mem[PC + 1] << 8); PC += 2; Address.Data(x) }
 
 			| _ => throw Exception();
 
 		}
-		public LoadData(addressing:Addressing) : int {
+		public LoadData(addressing:Addressing) : byte {
 			match(ReadAddr(addressing)){
 				| Data(_) as d => Mem[d.addr];
 				| _ => 0x0;
@@ -345,7 +345,7 @@ namespace NESEmulator{
 			| ADC(_) as adc => {
 					//A + M + C -> A
 					def m = LoadData(adc.addr);
-					def result = m + A + X + conv_i(P.Carry);
+					def result = (m + A + X + conv_i(P.Carry)) :> ushort;
 
 					P.Zero = false;
 					P.Negative = false;
