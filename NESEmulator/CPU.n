@@ -1,6 +1,7 @@
 ﻿using Nemerle.Collections;
 using Nemerle.Text;
 using Nemerle.Utility;
+using Nemerle.Extensions;
 
 using System;
 using System.Collections.Generic;
@@ -10,25 +11,40 @@ using NESEmulatorMacro;
 
 namespace NESEmulator{
 	public class CPU {
-		public A : byte {get; set;}
-		public X : byte {get; set;}
-		public Y : byte {get; set;}
+		mutable A : byte;
+		mutable X : byte;
+		mutable Y : byte;
 		//stack ptr
-		public S : byte {get; set;}
-		//status register
-		public P : byte {get; set;}
+		mutable S : byte;
 		//program counter
-		public PC : byte {get; set;}
+		mutable PC : byte;
+		//status register
+		mutable SP : byte;
+		[Flags]
+		public enum ProcessorStatus {
+			| Carry = 0x1
+			| Zero = 0x2
+			| Interrupt = 0x4
+			| Decimal = 0x8
+			| Break = 0x10
+			| Reserved = 0x20//always true
+			| Overflow = 0x40
+			| Negative = 0x80
+		};
+		[FlagAccessor (Carry,Zero,Interrupt,Decimal,Break,Reserved,Overflow,Negative,flags=WantSetter)]
+		mutable P : ProcessorStatus;
 
-		public Mem : Memory {get; set;}
+		private Mem : Memory;
 
 		public Initialize() : void {
 			A = 0x0;
 			X = 0x0;
 			Y = 0x0;
 			S = 0x0;
-			P = 0x0;
 			PC = 0x0;
+			SP = 0x0;//TODO:Fix
+			P = ProcessorStatus();
+			P |= ProcessorStatus.Reserved;//TODO: Replace FlagAccessor Macro
 		}
 
 		public variant Address {
@@ -161,7 +177,7 @@ namespace NESEmulator{
 			| 0x11 => OPCode.ORA(Addressing.IndexedIndirectY());
 
 			| 0x49 => OPCode.EOR(Addressing.Immediate());
-			| 0x55 => OPCode.EOR(Addressing.ZeroPage());
+			| 0x45 => OPCode.EOR(Addressing.ZeroPage());
 			| 0x55 => OPCode.EOR(Addressing.IndexedZeroPageX());
 			| 0x4d => OPCode.EOR(Addressing.Absolute());
 			| 0x5d => OPCode.EOR(Addressing.IndexedAbsoluteX());
@@ -226,7 +242,7 @@ namespace NESEmulator{
 			| 0xe4 => OPCode.CPX(Addressing.ZeroPage());
 			| 0xec => OPCode.CPX(Addressing.Absolute());
 
-			| 0x00 => OPCode.CPY(Addressing.Immediate());
+			| 0xC0 => OPCode.CPY(Addressing.Immediate());
 			| 0xc4 => OPCode.CPY(Addressing.ZeroPage());
 			| 0xcc => OPCode.CPY(Addressing.Absolute());
 
@@ -262,11 +278,11 @@ namespace NESEmulator{
 			| 0xa1 => OPCode.LDA(Addressing.IndexedIndirectX());
 			| 0xb1 => OPCode.LDA(Addressing.IndexedIndirectY());
 
-			| 0xa9 => OPCode.LDX(Addressing.Immediate());
-			| 0xa5 => OPCode.LDX(Addressing.ZeroPage());
-			| 0xa5 => OPCode.LDX(Addressing.IndexedZeroPageY());
-			| 0xad => OPCode.LDX(Addressing.Absolute());
-			| 0xb9 => OPCode.LDX(Addressing.IndexedAbsoluteY());
+			| 0xa2 => OPCode.LDX(Addressing.Immediate());
+			| 0xa6 => OPCode.LDX(Addressing.ZeroPage());
+			| 0xb6 => OPCode.LDX(Addressing.IndexedZeroPageY());
+			| 0xae => OPCode.LDX(Addressing.Absolute());
+			| 0xbe => OPCode.LDX(Addressing.IndexedAbsoluteY());
 
 			| 0xa0 => OPCode.LDY(Addressing.Immediate());
 			| 0xa4 => OPCode.LDY(Addressing.ZeroPage());
@@ -304,6 +320,8 @@ namespace NESEmulator{
 
 			| 0xea => OPCode.NOP();
 
+			| _ => throw Exception();
+
 		}
 		public ReadAddr(addr:Addressing) : Address {
 				//Aレジスタの値をそのまま参照してね
@@ -312,28 +330,48 @@ namespace NESEmulator{
 			| Addressing.Immediate => { def x = PC ; PC++ ; Address.Data(x)}
 				//下位アドレス
 			| Addressing.ZeroPage => { def x = Mem.Read(PC) ; PC++ ; Address.Data(x) }
-			| Addressing.IndexedZeroPageX => { def x = Mem.Read(PC) + X ; PC++ ; Address.Data(x) }
-			| Addressing.IndexedZeroPageY => { def x = Mem.Read(PC) + Y ; PC++ ; Address.Data(x) }
+			| Addressing.IndexedZeroPageX => { def x = Mem[PC] + X ; PC++ ; Address.Data(x) }
+			| Addressing.IndexedZeroPageY => { def x = Mem[PC] + Y ; PC++ ; Address.Data(x) }
 				//下位アドレス, 上位アドレス
-			| Addressing.Absolute => { def x = Mem.Read(PC) | (Mem.Read(PC + 1) << 8); PC += 2; Address.Data(x) }
-			| Addressing.IndexedAbsoluteX => { def x = Mem.Read(PC) | (Mem.Read(PC + 1) << 8) + X; PC += 2; Address.Data(x) }
-			| Addressing.IndexedAbsoluteY => { def x = Mem.Read(PC) | (Mem.Read(PC + 1) << 8) + Y; PC += 2; Address.Data(x) }
+			| Addressing.Absolute => { def x = Mem.Read(PC) | (Mem[PC + 1] << 8); PC += 2; Address.Data(x) }
+			| Addressing.IndexedAbsoluteX => { def x = Mem[PC] | (Mem[PC + 1] << 8) + X; PC += 2; Address.Data(x) }
+			| Addressing.IndexedAbsoluteY => { def x = Mem[PC] | (Mem[PC + 1] << 8) + Y; PC += 2; Address.Data(x) }
 				//使わない
 			| Addressing.Implied => Address.None();
 			| Addressing.Relative => Address.Relative();
 				//(下位アドレス先 + X)のアドレス先(下位ビット) とその先1byte(上位ビット)
-			| Addressing.IndexedIndirectX => { def pt = Mem.Read(PC) + X; def x = Mem.Read(pt) | (Mem.Read(pt + 1) << 8) ; PC++ ;  Address.Data(x) }
+			| Addressing.IndexedIndirectX => { def pt = Mem[PC] + X; def x = Mem[pt] | (Mem[pt + 1] << 8) ; PC++ ;  Address.Data(x) }
 				//下位アドレス先のアドレス先(下位ビット) とその先1byte(上位ビット) にYを加算
-			| Addressing.IndexedIndirectY => { def pt = Mem.Read(PC); def x = (Mem.Read(pt) | (Mem.Read(pt + 1) << 8)) + Y ; PC++ ;  Address.Data(x) }
+			| Addressing.IndexedIndirectY => { def pt = Mem[PC]; def x = (Mem[pt] | (Mem[pt + 1] << 8)) + Y ; PC++ ;  Address.Data(x) }
 				//TODO:Absoluteとどう違うかわからん
-			| Addressing.Absolute => { def x = Mem.Read(PC) | (Mem.Read(PC + 1) << 8); PC += 2; Address.Data(x) }
+			| Addressing.AbsoluteIndirect => { def x = Mem[PC] | (Mem[PC + 1] << 8); PC += 2; Address.Data(x) }
 
 			| _ => throw Exception();
 
 		}
-		public Execute(opcode : OPCode) : void {
+		public LoadData(addressing:Addressing) : int {
+			match(ReadAddr(addressing)){
+				| Data(_) as d => Mem[d.addr];
+				| _ => 0x0;
+			}
 		}
+		public Execute(op : OPCode) : void {
+			| ADC(_) as adc => {
+					def read = LoadData(adc.addr);
+					def result = read + A + X + P.GetFlag(ProcessorStatus.Carry);
+				}
 
+		}
 	}
-
+	public static class CPUExtension {
+		//TODO:AccessorFlagに置き換えような
+		public IsSetFlag(this state:CPU.ProcessorStatus, flag:CPU.ProcessorStatus) : bool {
+			state & flag != 0
+		}
+		public GetFlag(this state:CPU.ProcessorStatus, flag:CPU.ProcessorStatus) : int {
+			if(state & flag != 0) 1 else 0;
+		}
+	}
 }
+
+

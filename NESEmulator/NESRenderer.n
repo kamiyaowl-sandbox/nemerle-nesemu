@@ -14,6 +14,8 @@ namespace NESEmulator
 {
 	public class NESRenderer {
 		public Setup() : void {
+			def cpu = CPU();
+			cpu.Initialize();
 			def mem = Memory();
 			mem.Reset();
 			foreach(i in [0,Memory.WRAM_ADDR,Memory.WRAM_MIRROR_ADDR,Memory.PPU_IO_ADDR,Memory.PPU_IO_MIRROR,Memory.APU_PAD_IO_ADDR,Memory.EXTEND_ROM_ADDR,Memory.EXTEND_RAM_ADDR,Memory.PRG_ROM1_ADDR,Memory.PRG_ROM2_ADDR - 1]){

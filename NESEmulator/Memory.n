@@ -95,6 +95,10 @@ namespace NESEmulator {
 			Array.Clear(rom1,0,rom1.Length);
 			Array.Clear(rom2,0,rom2.Length);
 		}
+		public Item[addr : int] : byte {
+			get { Read(addr) }
+			set { Write(addr, value) }
+		}
 
 		public Read(addr:int) : byte {
 			| _ when addr < WRAM_MIRROR_ADDR => wram[addr % WRAM_SIZE];
