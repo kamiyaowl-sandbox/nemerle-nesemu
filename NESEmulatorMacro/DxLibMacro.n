@@ -11,10 +11,10 @@ using System.Linq;
 using DxLibDLL;
 
 namespace NESEmulatorMacro {
-	macro DxBoolLiteral(b) syntax ("dx", "<-" , b) {
-		<[if($b) DX.TRUE else DX.FALSE ]>
+	macro BoolToIntLiteral(b) syntax ("conv_i", "(" , b, ")") {
+		<[if($b) 1 else 0 ]>
 	}
-	macro BoolDxLiteral(b) syntax ("dx", "->" , b) {
-		<[ if($b == DX.TRUE) true else false ]>
+	macro IntToBoolLiteral(b) syntax ("conv_b","(" , b, ")") {
+		<[ if($b == 1) true else false ]>
 	}
 }

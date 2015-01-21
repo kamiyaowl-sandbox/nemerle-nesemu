@@ -20,12 +20,12 @@ namespace NESEmulator
   {
 	static Main() : void {
 		def game = NESRenderer();
-		_ = ChangeWindowMode(dx <- true);
+		_ = ChangeWindowMode(conv_i(true));
 		when(DxLib_Init() == -1){
 			throw System.PlatformNotSupportedException();
 		}
 		_ = SetDrawScreen(DX_SCREEN_BACK);
-		_ = SetAlwaysRunFlag(dx <- true);
+		_ = SetAlwaysRunFlag(conv_i(true));
 		_ = SetWindowText("NES Emu");
 
 		game.Setup();
@@ -36,7 +36,7 @@ namespace NESEmulator
 		mutable fpsCount = 0;
 		mutable fpsCalcTick = 0;
 		mutable currentFps = 0.0f;
-		while(!(dx -> ProcessMessage()) && !(dx -> ClearDrawScreen()) && !game.IsEnd()){
+		while(!conv_b(ProcessMessage()) && !conv_b(ClearDrawScreen()) && !game.IsEnd()){
 			fpsCount += 1;
 			when(fpsCount > fps){
 				currentFps = fps * 1000 / (GetNowCount() - fpsCalcTick :> float);

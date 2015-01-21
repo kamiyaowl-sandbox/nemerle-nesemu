@@ -1,0 +1,98 @@
+﻿using Nemerle;
+using Nemerle.Collections;
+using Nemerle.Text;
+using Nemerle.Utility;
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace NESEmulator {
+	
+	public interface IRegister[T] {
+		GetValue() : T;
+	}
+
+	public class ProcessorStatus : IRegister[byte] {
+		[Flags]
+		public enum StatusRegister {
+			| Carry = 0x1
+			| Zero = 0x2
+			| Interrupt = 0x4
+			| Decimal = 0x8
+			| Break = 0x10
+			| Reserved = 0x20//always true
+			| Overflow = 0x40
+			| Negative = 0x80
+		};
+		[FlagAccessor (Carry,Zero,Interrupt,Decimal,Break,Reserved,Overflow,Negative,flags=WantSetter)]
+		mutable reg : StatusRegister;
+
+		public GetValue() : byte { reg :> byte }
+	}
+	public class PPUControl : IRegister[byte] {
+		[Flags]
+		public enum StatusRegister {
+			| CONTROL_1 = 0x1
+			| CONTROL_2 = 0x2
+			| STATUS = 0x4
+			| SPRITE_ADDR = 0x8
+			| SPRITE_IO = 0x10
+			| BG_SCROLL = 0x20
+			| MEMORY_ADDR = 0x40
+			| IO_REGISTER = 0x80
+		};
+		[FlagAccessor (CONTROL_1,CONTROL_2,STATUS,SPRITE_ADDR,SPRITE_IO,BG_SCROLL,MEMORY_ADDR,IO_REGISTER,flags=WantSetter)]
+		mutable reg : StatusRegister;
+
+		public GetValue() : byte { reg :> byte }
+	}
+	public class APUControl : IRegister[ushort] {
+		[Flags]
+		public enum StatusRegister {
+			| WRITE_SQUARE_1_CONTROL_1 = 0x1
+			| WRITE_SQUARE_1_CONTROL_2 = 0x2
+			| WRITE_SQUARE_1_TIMER_1 = 0x4
+			| WRITE_SQUARE_1_TIMER_2 = 0x8
+
+			| WRITE_SQUARE_2_CONTROL_1 = 0x10
+			| WRITE_SQUARE_2_CONTROL_2 = 0x20
+			| WRITE_SQUARE_2_TIMER_1 = 0x40
+			| WRITE_SQUARE_2_TIMER_2 = 0x80
+
+			| WRITE_TRIANGLE_CONTROL_1 = 0x100
+			| WRITE_TRIANGLE_CONTROL_2 = 0x200
+			| WRITE_TRIANGLE_TIMER_1 = 0x400
+			| WRITE_TRIANGLE_TIMER_2 = 0x800
+
+			| WRITE_NOISE_CONTROL_1 = 0x1000
+			| WRITE_NOISE_CONTROL_2 = 0x2000
+			| WRITE_NOISE_TIMER_1 = 0x4000
+			| WRITE_NOISE_TIMER_2 = 0x8000
+
+			| PCM_CONTROL = 0x10000
+			| PCM_VOLUME = 0x20000
+			| PCM_ADDR = 0x40000
+			| PCM_LENGTH = 0x80000
+
+			| SPRITE_DMA = 0x100000
+			| SOUND_CONTROL = 0x200000
+
+			| SPECIO_1 = 0x400000
+			| SPECIO_2 = 0x800000
+		};
+		[FlagAccessor (
+			WRITE_SQUARE_1_CONTROL_1, WRITE_SQUARE_1_CONTROL_2, WRITE_SQUARE_1_TIMER_1, WRITE_SQUARE_1_TIMER_2,
+			WRITE_SQUARE_2_CONTROL_1, WRITE_SQUARE_2_CONTROL_2, WRITE_SQUARE_2_TIMER_1, WRITE_SQUARE_2_TIMER_2,
+			WRITE_TRIANGLE_CONTROL_1, WRITE_TRIANGLE_CONTROL_2, WRITE_TRIANGLE_TIMER_1, WRITE_TRIANGLE_TIMER_2,
+			WRITE_NOISE_CONTROL_1, WRITE_NOISE_CONTROL_2, WRITE_NOISE_TIMER_1, WRITE_NOISE_TIMER_2,
+			PCM_CONTROL, PCM_VOLUME, PCM_ADDR, PCM_LENGTH,
+			SPRITE_DMA, SOUND_CONTROL,
+			SPECIO_1, SPECIO_2,
+		flags=WantSetter)]
+		mutable reg : StatusRegister;
+
+		public GetValue() : ushort{ reg :> ushort }
+	}
+
+}

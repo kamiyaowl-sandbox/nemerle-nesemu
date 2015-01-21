@@ -20,21 +20,9 @@ namespace NESEmulator{
 		mutable PC : byte;
 		//status register
 		mutable SP : byte;
-		[Flags]
-		public enum ProcessorStatus {
-			| Carry = 0x1
-			| Zero = 0x2
-			| Interrupt = 0x4
-			| Decimal = 0x8
-			| Break = 0x10
-			| Reserved = 0x20//always true
-			| Overflow = 0x40
-			| Negative = 0x80
-		};
-		[FlagAccessor (Carry,Zero,Interrupt,Decimal,Break,Reserved,Overflow,Negative,flags=WantSetter)]
-		mutable P : ProcessorStatus;
 
-		private Mem : Memory;
+		private P : ProcessorStatus = ProcessorStatus() <- { Reserved = true };
+		private Mem : Memory = Memory();
 
 		public Initialize() : void {
 			A = 0x0;
@@ -43,8 +31,6 @@ namespace NESEmulator{
 			S = 0x0;
 			PC = 0x0;
 			SP = 0x0;//TODO:Fix
-			P = ProcessorStatus();
-			P |= ProcessorStatus.Reserved;//TODO: Replace FlagAccessor Macro
 		}
 
 		public variant Address {
@@ -358,18 +344,9 @@ namespace NESEmulator{
 		public Execute(op : OPCode) : void {
 			| ADC(_) as adc => {
 					def read = LoadData(adc.addr);
-					def result = read + A + X + P.GetFlag(ProcessorStatus.Carry);
+					//def result = read + A + X + conv_i(P.Carry);
 				}
 
-		}
-	}
-	public static class CPUExtension {
-		//TODO:AccessorFlagに置き換えような
-		public IsSetFlag(this state:CPU.ProcessorStatus, flag:CPU.ProcessorStatus) : bool {
-			state & flag != 0
-		}
-		public GetFlag(this state:CPU.ProcessorStatus, flag:CPU.ProcessorStatus) : int {
-			if(state & flag != 0) 1 else 0;
 		}
 	}
 }

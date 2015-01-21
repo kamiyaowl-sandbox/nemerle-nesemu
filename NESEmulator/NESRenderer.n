@@ -30,6 +30,6 @@ namespace NESEmulator
 			_ = DrawString(10,100,"from Nemerle",GetColor(0xff,0,0));
 		}
 		public Exit() : void {};
-		public IsEnd() : bool { dx -> CheckHitKey(KEY_INPUT_ESCAPE); }
+		public IsEnd() : bool { conv_b(CheckHitKey(KEY_INPUT_ESCAPE)); }
 	}
 }

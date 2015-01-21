@@ -32,49 +32,9 @@ namespace NESEmulator {
 		public static PRG_ROM1_ADDR = 0xC000;
 		public static PRG_ROM2_ADDR = 0x10000;
 	//ppu control register($2000 ~ $2007)
-		public enum PPU_CONTROL : int {
-			| CONTROL1
-			| CONTROL2
-			| STATUS
-			| SPRITE_ADDR
-			| SPRITE_IO
-			| BG_SCROLL
-			| MEMORY_ADDR
-			| IO_REGISTER
-		};
+		private PPUControlRegister : PPUControl = PPUControl();
 	//apu control register($4000 ~ $4017)
-		public enum APU_CONTROL : int {
-			| WRITE_SQUARE_1_CONTROL_1
-			| WRITE_SQUARE_1_CONTROL_2
-			| WRITE_SQUARE_1_TIMER_1
-			| WRITE_SQUARE_1_TIMER_2
-
-			| WRITE_SQUARE_2_CONTROL_1
-			| WRITE_SQUARE_2_CONTROL_2
-			| WRITE_SQUARE_2_TIMER_1
-			| WRITE_SQUARE_2_TIMER_2
-
-			| WRITE_TRIANGLE_CONTROL_1
-			| WRITE_TRIANGLE_CONTROL_2
-			| WRITE_TRIANGLE_TIMER_1
-			| WRITE_TRIANGLE_TIMER_2
-
-			| WRITE_NOISE_CONTROL_1
-			| WRITE_NOISE_CONTROL_2
-			| WRITE_NOISE_TIMER_1
-			| WRITE_NOISE_TIMER_2
-
-			| PCM_CONTROL
-			| PCM_VOLUME
-			| PCM_ADDR
-			| PCM_LENGTH
-
-			| SPRITE_DMA
-			| SOUND_CONTROL
-
-			| SPECIO_1
-			| SPECIO_2
-		};
+		private APIControlRegister : APUControl = APUControl();
 
 		private wram  : array[byte] = array(WRAM_SIZE);
 		private ppuio : array[byte] = array(PPU_IO_SIZE);
@@ -102,12 +62,8 @@ namespace NESEmulator {
 
 		public Read(addr:int) : byte {
 			| _ when addr < WRAM_MIRROR_ADDR => wram[addr % WRAM_SIZE];
-			| _ when addr < PPU_IO_MIRROR => match(((addr - WRAM_MIRROR_ADDR) % PPU_IO_SIZE) :> PPU_CONTROL) {
-						| _ => ppuio[(addr - WRAM_MIRROR_ADDR)  % PPU_IO_SIZE];
-					}
-			| _ when addr < APU_PAD_IO_ADDR => match((addr - PPU_IO_MIRROR) :> APU_CONTROL) {
-						| _ => 0x40;
-					}
+			| _ when addr < PPU_IO_MIRROR =>  ppuio[(addr - WRAM_MIRROR_ADDR)  % PPU_IO_SIZE];
+			| _ when addr < APU_PAD_IO_ADDR => 0x40
 			| _ when addr < EXTEND_ROM_ADDR => 0//EXROMは未実装
 			| _ when addr < EXTEND_RAM_ADDR => exram[addr - EXTEND_ROM_ADDR];
 			| _ when addr < PRG_ROM1_ADDR => rom1[addr - EXTEND_RAM_ADDR];
@@ -115,11 +71,10 @@ namespace NESEmulator {
 		}
 		public Write(addr:int,data:byte) : void {
 			| _ when addr < WRAM_MIRROR_ADDR => wram[addr % WRAM_SIZE] = data;
-			| _ when addr < PPU_IO_MIRROR => match(((addr - WRAM_MIRROR_ADDR) % PPU_IO_SIZE) :> PPU_CONTROL) {
-						| _ => ppuio[(addr - WRAM_MIRROR_ADDR)  % PPU_IO_SIZE] = data;
-					}
-			| _ when addr < APU_PAD_IO_ADDR => match((addr - PPU_IO_MIRROR) :> APU_CONTROL) {
-						| SPRITE_DMA => {
+			| _ when addr < PPU_IO_MIRROR => ppuio[(addr - WRAM_MIRROR_ADDR)  % PPU_IO_SIZE] = data;
+			| _ when addr < APU_PAD_IO_ADDR => match(addr - PPU_IO_MIRROR) {
+						//TODO:SpriteDMAしような
+						| 0 => {
 						//TODO:Copy RAM -> SPRITE_RAM
 								()
 							}
