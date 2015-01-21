@@ -329,34 +329,149 @@ namespace NESEmulator{
 			| Addressing.IndexedIndirectX => { def pt : ushort = Mem[PC] + X; def x  : ushort = Mem[pt] | (Mem[pt + 1] << 8) ; PC++ ;  Address.Data(x) }
 				//下位アドレス先のアドレス先(下位ビット) とその先1byte(上位ビット) にYを加算
 			| Addressing.IndexedIndirectY => { def pt : ushort = Mem[PC]; def x : ushort= (Mem[pt] | (Mem[pt + 1] << 8)) + Y ; PC++ ;  Address.Data(x) }
-				//TODO:Absoluteとどう違うかわからん
+				//TODO:Absoluteとどう違うかわからん、というか使われてない
 			| Addressing.AbsoluteIndirect => { def x : ushort = Mem[PC] | (Mem[PC + 1] << 8); PC += 2; Address.Data(x) }
 
 			| _ => throw Exception();
 
 		}
-		public LoadData(addressing:Addressing) : byte {
+		public LoadAddressingData(addressing:Addressing) : byte {
 			match(ReadAddr(addressing)){
 				| Data(_) as d => Mem[d.addr];
-				| _ => 0x0;
+				| _ => throw NotImplementedException();
+			}
+		}
+		public StoreAddressingData(addressing:Addressing, data:byte) : void {
+			match(ReadAddr(addressing)){
+				| Data(_) as d => Mem[d.addr] = data;
+				| _ => throw NotImplementedException();
 			}
 		}
 		public Execute(op : OPCode) : void {
+				// Operation
+				//NVZC
 			| ADC(_) as adc => {
 					//A + M + C -> A
-					def m = LoadData(adc.addr);
-					def result = (m + A + X + conv_i(P.Carry)) :> ushort;
+					def m = LoadAddressingData(adc.addr);
+					def result = (A + m + conv_i(P.Carry)) :> ushort;
 
-					P.Zero = false;
-					P.Negative = false;
-
+					P.Negative = conv_b(result & 0x80);
 					P.Carry = conv_b(result & 0x100);
 					P.Overflow = result > 0xff;//TODO:Replace bitop
 					P.Zero = result == 0;
 
 					A = result :> byte;
 				}
+			| SBC(_) as sbc => {
+					//A - M - notC -> A
+					def m = LoadAddressingData(sbc.addr);
+					def result = (A - m - conv_i(!P.Carry)) :> ushort;
 
+					P.Negative = conv_b(result & 0x80);
+					P.Carry = conv_b(result & 0x100);
+					P.Overflow = result > 0xff;//TODO:Replace bitop
+					P.Zero = result == 0;
+
+					A = result :> byte;
+				}
+				// Logic Operation
+				//NZ
+			| AND(_) as an => {
+					//A and M -> A
+					def m = LoadAddressingData(an.addr);
+					def result = (A & m);
+
+					P.Zero = result == 0;
+					P.Negative = conv_b(result & 0x80);
+
+					A = result;
+				}
+			| ORA(_) as ora => {
+					//A or M -> A
+					def m = LoadAddressingData(ora.addr);
+					def result = (A | m);
+
+					P.Zero = result == 0;
+					P.Negative = conv_b(result & 0x80);
+
+					A = result;
+				}
+			| EOR(_) as eor => {
+					//A xor M -> A
+					def m = LoadAddressingData(eor.addr);
+					def result = (A ^ m);
+
+					P.Zero = result == 0;
+					P.Negative = conv_b(result & 0x80);
+
+					A = result;
+				}
+				// Shift, Rotation
+				//TODO ASL,LSRなどAccumulator処理の抽出
+			| ASL(addr = Accumulator) => A = implASL(A);
+			| ASL(_) as asl => {
+					def m = LoadAddressingData(asl.addr);
+					def result = implASL(m);
+					StoreAddressingData(asl.addr,result);
+				}
+			| LSR(addr = Accumulator) => A = implLSR(A);
+			| LSR(_) as asl => {
+					def m = LoadAddressingData(asl.addr);
+					def result = implLSR(m);
+					StoreAddressingData(asl.addr,result);
+				}
+			| ROL(addr = Accumulator) => A = implROL(A);
+			| ROL(_) as rol => {
+					def m = LoadAddressingData(rol.addr);
+					def result = implROL(m);
+					StoreAddressingData(rol.addr,result);
+				}
+
+		}
+
+		private implASL(m : byte) : byte {
+			// {m[6:0], 0]} -> m
+			// m[7] -> Carry
+			def result : byte = m << 1;
+
+			P.Carry = conv_b(m & 0x80);
+			P.Zero = result == 0;
+			P.Negative = conv_b(result & 0x80);
+
+			result;
+		}
+		private implLSR(m : byte) : byte {
+			// { 0, m[7:1]]} -> m
+			// m[0] -> Carry
+			def result : byte = (m >> 1) & 0x7f;
+
+			P.Carry = conv_b(m & 0x1);
+			P.Zero = result == 0;
+			P.Negative = conv_b(result & 0x80);
+
+			result;
+		}
+		private implROL(m : byte) : byte {
+			// {m[6:0], Carry]} -> m
+			// m[7] -> Carry
+			def result = m << 1 | conv_i(P.Carry) :> byte;
+
+			P.Carry = conv_b(m & 0x80);
+			P.Zero = result == 0;
+			P.Negative = conv_b(result & 0x80);
+
+			result;
+		}
+		private implROR(m : byte) : byte {
+			// { C, m[7:1]]} -> m
+			// m[0] -> Carry
+			def result = (m >> 1) | (conv_i(P.Carry) << 7) :> byte;
+
+			P.Carry = conv_b(m & 0x1);
+			P.Zero = result == 0;
+			P.Negative = conv_b(result & 0x80);
+
+			result;
 		}
 	}
 }

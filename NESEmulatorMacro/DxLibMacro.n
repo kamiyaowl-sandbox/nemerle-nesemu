@@ -15,6 +15,6 @@ namespace NESEmulatorMacro {
 		<[if($b) 1 else 0 ]>
 	}
 	macro IntToBoolLiteral(b) syntax ("conv_b","(" , b, ")") {
-		<[ if(($b) == 1) true else false ]>
+		<[ if(($b) != 0) true else false ]>
 	}
 }
