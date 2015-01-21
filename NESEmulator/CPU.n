@@ -343,8 +343,18 @@ namespace NESEmulator{
 		}
 		public Execute(op : OPCode) : void {
 			| ADC(_) as adc => {
-					def read = LoadData(adc.addr);
-					//def result = read + A + X + conv_i(P.Carry);
+					//A + M + C -> A
+					def m = LoadData(adc.addr);
+					def result = m + A + X + conv_i(P.Carry);
+
+					P.Zero = false;
+					P.Negative = false;
+
+					P.Carry = conv_b(result & 0x100);
+					P.Overflow = result > 0xff;//TODO:Replace bitop
+					P.Zero = result == 0;
+
+					A = result :> byte;
 				}
 
 		}
