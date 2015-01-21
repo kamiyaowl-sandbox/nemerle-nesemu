@@ -65,14 +65,14 @@ namespace NESEmulator{
 			| ROL { addr:Addressing }// << rotate
 			| ROR { addr:Addressing }// >> rotate
 
-			| BCC { addr:Addressing }  //no carry jump
-			| BCS { addr:Addressing }  //carry jump
-			| BEQ { addr:Addressing } // == jump
-			| BNE { addr:Addressing }  // != jump
-			| BVC { addr:Addressing }  //no ovf jump
-			| BVS { addr:Addressing }  //ovf jump
-			| BPL { addr:Addressing } //jump if +
-			| BMI { addr:Addressing }  //jump if -
+			| BCC   //no carry jump
+			| BCS   //carry jump
+			| BEQ  // == jump
+			| BNE   // != jump
+			| BVC   //no ovf jump
+			| BVS   //ovf jump
+			| BPL  //jump if +
+			| BMI   //jump if -
 
 			| BIT { addr:Addressing }//and a
 
@@ -408,6 +408,7 @@ namespace NESEmulator{
 				}
 				// Shift, Rotation
 				//TODO ASL,LSRなどAccumulator処理の抽出
+
 			| ASL(addr = Accumulator) => A = implASL(A);
 			| ASL(_) as asl => {
 					def m = LoadAddressingData(asl.addr);
@@ -427,6 +428,14 @@ namespace NESEmulator{
 					StoreAddressingData(rol.addr,result);
 				}
 
+			| BCC => implBranch(!P.Carry)
+			| BCS => implBranch(P.Carry)
+			| BEQ => implBranch(P.Zero)
+			| BNE => implBranch(!P.Zero)
+			| BVC => implBranch(!P.Overflow)
+			| BVS => implBranch(P.Overflow)
+			| BPL => implBranch(!P.Negative)
+			| BMI => implBranch(P.Negative)
 		}
 
 		private implASL(m : byte) : byte {
@@ -472,6 +481,15 @@ namespace NESEmulator{
 			P.Negative = conv_b(result & 0x80);
 
 			result;
+		}
+		private implBranch(status:bool) : void {
+			| true => {
+					def nextAddr = Mem[PC];
+					PC += nextAddr + 1;
+					//TODO:clocking
+				}
+			| false => PC++;
+
 		}
 	}
 }
