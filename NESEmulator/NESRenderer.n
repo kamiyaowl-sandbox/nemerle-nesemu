@@ -18,7 +18,11 @@ namespace NESEmulator
 			cpu.Initialize();
 			def mem = Memory();
 			mem.Reset();
-
+			foreach(i in [0x0 .. 0xff]){
+				def op = cpu.Convert(i :> byte);
+				Console.WriteLine(op);
+				cpu.Execute(op);
+			}
 		}
 		public Calculate() : void {
 		}

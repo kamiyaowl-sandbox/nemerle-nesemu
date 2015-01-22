@@ -14,11 +14,8 @@ namespace NESEmulator{
 		mutable A : byte;
 		mutable X : byte;
 		mutable Y : byte;
-		//stack ptr
-		mutable S : byte;
 		//program counter
 		mutable PC : ushort;
-		//status register
 		mutable SP : byte;
 
 		private P : ProcessorStatus = ProcessorStatus() <- { Reserved = true };
@@ -28,7 +25,6 @@ namespace NESEmulator{
 			A = 0x0;
 			X = 0x0;
 			Y = 0x0;
-			S = 0x0;
 			PC = 0x0;
 			SP = 0x0;//TODO:Fix
 		}
@@ -304,8 +300,8 @@ namespace NESEmulator{
 			| 0x28 => OPCode.PLP(4)
 
 			| 0xea => OPCode.NOP(2)
-
-			| _ => throw Exception()
+				//TODO:TESTTESTTEST
+			| _ => OPCode.NOP(2)//throw NotImplementedException()
 
 		}
 		//データアドレッシング
@@ -362,27 +358,27 @@ namespace NESEmulator{
 				//NVZC
 			| ADC as adc => {
 					//A + M + C -> A
-					def m = readMem(adc.addr);
-					def result = (A + m + conv_i(P.Carry)) :> ushort;
+					def m = readMem(adc.addr) :> ushort;
+					def result = unchecked(A + m + conv_i(P.Carry)) ;
 
 					P.Negative = conv_b(result & 0x80);
 					P.Carry = conv_b(result & 0x100);
 					P.Overflow = result > 0xff;//TODO:Replace bitop
 					P.Zero = result == 0;
 
-					A = result :> byte;
+					A = unchecked(result :> byte);
 				}
 			| SBC as sbc => {
 					//A - M - notC -> A
-					def m = readMem(sbc.addr);
-					def result = (A - m - conv_i(!P.Carry)) :> ushort;
+					def m = readMem(sbc.addr) :> ushort;
+					def result = unchecked(A - m - conv_i(!P.Carry)) ;
 
 					P.Negative = conv_b(result & 0x80);
 					P.Carry = conv_b(result & 0x100);
 					P.Overflow = result > 0xff;//TODO:Replace bitop
 					P.Zero = result == 0;
 
-					A = result :> byte;
+					A = unchecked(result :> byte);
 				}
 				// Logic Operation
 				//NZ
@@ -426,6 +422,12 @@ namespace NESEmulator{
 					def result = implROL(m);
 					writeMem(rol.addr,result);
 				}
+			| ROR(addr = Accumulator) => A = implROR(A)
+			| ROR as ror => {
+					def m = readMem(ror.addr);
+					def result = implROR(m);
+					writeMem(ror.addr,result);
+				}
 
 			| BCC => implBranch(!P.Carry)
 			| BCS => implBranch(P.Carry)
@@ -436,7 +438,7 @@ namespace NESEmulator{
 			| BPL => implBranch(!P.Negative)
 			| BMI => implBranch(P.Negative)
 				// ZNV
-			| BIT(addr = ZeroPage) as bit => {
+			| BIT as bit => {
 					def m = readMem(bit.addr);
 					def result = A & m;
 					P.Zero = result == 0;
@@ -444,14 +446,13 @@ namespace NESEmulator{
 					P.Negative = conv_b(m & 0x80);
 				}
 
-			| JMP(addr = Absolute) as jmp => {
-					//2byteAbsolute読み込み
+			| JMP as jmp => {
 					PC = readAddr(jmp.addr);
 				}
-			| JSR(addr = Absolute) as jsr => {
+			| JSR as jsr => {
 					def addr = readAddr(jsr.addr);
-					def pch = (PC >> 8) :> byte;
-					def pcl = (PC & 0xff) :> byte;
+					def pch = unchecked((PC >> 8) :> byte);
+					def pcl = unchecked((PC & 0xff) :> byte);
 
 					implPush(pch);
 					implPush(pcl);
@@ -464,9 +465,9 @@ namespace NESEmulator{
 				}
 			| BRK => unless(P.Interrupt) {
 						P.Break = true;
-						PC++;
-						def pch = (PC >> 8) :> byte;
-						def pcl = (PC & 0xff) :> byte;
+						unchecked(PC++);
+						def pch = unchecked((PC >> 8) :> byte);
+						def pcl = unchecked((PC & 0xff) :> byte);
 
 						implPush(pch);
 						implPush(pcl);
@@ -520,8 +521,8 @@ namespace NESEmulator{
 			| TXA => A = checkFlagNZ(X)
 			| TAY => Y = checkFlagNZ(A)
 			| TYA => A = checkFlagNZ(Y)
-			| TSX => X = checkFlagNZ(S)
-			| TXS => S = X
+			| TSX => X = checkFlagNZ(SP)
+			| TXS => SP = X
 
 			| PHA => implPush(A)
 			| PLA => A = checkFlagNZ(implPop())
@@ -535,7 +536,7 @@ namespace NESEmulator{
 		private implASL(m : byte) : byte {
 			// {m[6:0], 0]} -> m
 			// m[7] -> Carry
-			def result : byte = m << 1;
+			def result : byte = unchecked(m << 1);
 
 			P.Carry = conv_b(m & 0x80);
 			P.Zero = result == 0;
@@ -546,7 +547,7 @@ namespace NESEmulator{
 		private implLSR(m : byte) : byte {
 			// { 0, m[7:1]]} -> m
 			// m[0] -> Carry
-			def result : byte = (m >> 1) & 0x7f;
+			def result : byte = unchecked((m >> 1) & 0x7f);
 
 			P.Carry = conv_b(m & 0x1);
 			P.Zero = result == 0;
@@ -557,7 +558,7 @@ namespace NESEmulator{
 		private implROL(m : byte) : byte {
 			// {m[6:0], Carry]} -> m
 			// m[7] -> Carry
-			def result = m << 1 | conv_i(P.Carry) :> byte;
+			def result = unchecked(m << 1 | (conv_i(P.Carry) :> byte));
 
 			P.Carry = conv_b(m & 0x80);
 			P.Zero = result == 0;
@@ -568,7 +569,7 @@ namespace NESEmulator{
 		private implROR(m : byte) : byte {
 			// { C, m[7:1]]} -> m
 			// m[0] -> Carry
-			def result = (m >> 1) | (conv_i(P.Carry) << 7) :> byte;
+			def result = unchecked((m >> 1) | ((conv_i(P.Carry) << 7) :> byte));
 
 			P.Carry = conv_b(m & 0x1);
 			P.Zero = result == 0;
@@ -587,16 +588,16 @@ namespace NESEmulator{
 		private implPush(data:byte) : void {
 			def pt = (0x0100 | SP) :> ushort;//上位ビットは$01固定
 			Mem[pt] = data;
-			SP--;
+			unchecked(SP--);
 		}
 		private implPop() : byte {
-			SP++;
+			unchecked(SP++);
 			def pt = (0x0100 | SP) :> ushort;//上位ビットは$01固定
 			Mem[pt];
 		}
 
 		private implCMP(reg: byte, m : byte) : void {
-			def result : int = reg - m;
+			def result = (reg :> int) - m;
 
 			P.Negative = conv_b(result & 0x80);
 			P.Carry = result >= 0x00 ;
@@ -604,12 +605,12 @@ namespace NESEmulator{
 		}
 
 		private implINC(reg:byte) : byte {
-			def result = reg + 1;
+			def result = unchecked(reg + 1);
 
 			checkFlagNZ(result)
 		}
 		private implDEC(reg:byte) : byte {
-			def result = reg - 1;
+			def result = unchecked(reg - 1);
 
 			checkFlagNZ(result)
 		}
