@@ -30,7 +30,7 @@ namespace NESEmulator {
 		mutable reg : StatusRegister;
 
 		public GetValue() : byte { reg :> byte }
-		public SetValue(data : byte) : void { reg = data }
+		public SetValue(data : byte) : void { reg = data :> StatusRegister }
 	}
 	public class PPUControl : IRegister[byte] {
 		[Flags]
@@ -48,7 +48,7 @@ namespace NESEmulator {
 		mutable reg : StatusRegister;
 
 		public GetValue() : byte { reg :> byte }
-		public SetValue(data : byte) : void { reg = data }
+		public SetValue(data : byte) : void { reg = data :> StatusRegister }
 
 	}
 	public class APUControl : IRegister[ushort] {
@@ -97,7 +97,7 @@ namespace NESEmulator {
 		mutable reg : StatusRegister;
 
 		public GetValue() : ushort{ reg :> ushort }
-		public SetValue(data : byte) : void { reg = data }
+		public SetValue(data : ushort) : void { reg = data :> StatusRegister }
 
 	}
 

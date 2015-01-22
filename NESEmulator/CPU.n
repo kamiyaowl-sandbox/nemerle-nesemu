@@ -308,7 +308,8 @@ namespace NESEmulator{
 			| _ => throw Exception()
 
 		}
-		private readAddressing(addr:Addressing) : Address {
+		//データアドレッシング
+		private dataAddressing(addr:Addressing) : Address {
 				//Aレジスタの値をそのまま参照してね
 			| Addressing.Accumulator => Address.Accumelator()
 				//PCの即値を適用(PCを進めとく)
@@ -334,20 +335,23 @@ namespace NESEmulator{
 			| _ => throw NotImplementedException()
 
 		}
+		//アドレッシングした先のMemを読み取る、アドレッシングがNone,Relative,Accumulator等の場合例外
 		public readMem(addressing:Addressing) : byte {
-			match(readAddressing(addressing)){
+			match(dataAddressing(addressing)){
 				| Data(_) as d => Mem[d.addr]
 				| _ => throw NotImplementedException()
 			}
 		}
+		//アドレッシングした先のMemに書き込む、アドレッシングがNone,Relative,Accumulator等の場合例外
 		public writeMem(addressing:Addressing, data:byte) : void {
-			match(readAddressing(addressing)){
+			match(dataAddressing(addressing)){
 				| Data(_) as d => Mem[d.addr] = data
 				| _ => throw NotImplementedException()
 			}
 		}
-		private readAbsoluteAddr(addr:Addressing) : ushort {
-			match(readAddressing(addr)) {
+		//アドレッシングしたアドレスを読み取る。多分Absolute以外使わない。アドレッシングがNone,Relative,Accumulator等の場合例外
+		private readAddr(addr:Addressing) : ushort {
+			match(dataAddressing(addr)) {
 				| Data(_) as d => d.addr
 				| _ => throw NotImplementedException()
 			}
@@ -387,30 +391,21 @@ namespace NESEmulator{
 					def m = readMem(an.addr);
 					def result = (A & m);
 
-					P.Zero = result == 0;
-					P.Negative = conv_b(result & 0x80);
-
-					A = result;
+					A = checkFlagNZ(result);
 				}
 			| ORA(_) as ora => {
 					//A or M -> A
 					def m = readMem(ora.addr);
 					def result = (A | m);
 
-					P.Zero = result == 0;
-					P.Negative = conv_b(result & 0x80);
-
-					A = result;
+					A = checkFlagNZ(result);
 				}
 			| EOR(_) as eor => {
 					//A xor M -> A
 					def m = readMem(eor.addr);
 					def result = (A ^ m);
 
-					P.Zero = result == 0;
-					P.Negative = conv_b(result & 0x80);
-
-					A = result;
+					A = checkFlagNZ(result);
 				}
 				// Shift, Rotation
 			| ASL(addr = Accumulator) => A = implASL(A)
@@ -451,10 +446,10 @@ namespace NESEmulator{
 
 			| JMP(addr = Absolute) as jmp => {
 					//2byteAbsolute読み込み
-					PC = readAbsoluteAddr(jmp.addr);
+					PC = readAddr(jmp.addr);
 				}
 			| JSR(addr = Absolute) as jsr => {
-					def addr = readAbsoluteAddr(jsr.addr);
+					def addr = readAddr(jsr.addr);
 					def pch = (PC >> 8) :> byte;
 					def pcl = (PC & 0xff) :> byte;
 
@@ -487,6 +482,54 @@ namespace NESEmulator{
 					def pch = implPop();
 					PC = ((pch << 8) & pcl) + 1;
 				}
+
+			| CMP(_) as cmp => implCMP(A,readMem(cmp.addr))
+			| CPX(_) as cpx => implCMP(X,readMem(cpx.addr))
+			| CPY(_) as cpy => implCMP(Y,readMem(cpy.addr))
+
+			| INC(_) as inc => {
+					def addr = readAddr(inc.addr);
+					Mem[addr] = implINC(Mem[addr]);
+				}
+			| DEC(_) as dec => {
+					def addr = readAddr(dec.addr);
+					Mem[addr] = implDEC(Mem[addr]);
+				}
+			| INX => X = implINC(X)
+			| DEX => X = implDEC(X)
+			| INY => Y = implINC(Y)
+			| DEY => Y = implDEC(Y)
+
+			| CLC => P.Carry = false
+			| SEC => P.Carry = true
+			| CLI => P.Interrupt = false
+			| SEI => P.Interrupt = true
+			| CLD => P.Decimal = false
+			| SED => P.Decimal = true
+			| CLV => P.Overflow = false
+
+			| LDA(_) as lda => A = checkFlagNZ(readMem(lda.addr))
+			| LDX(_) as ldx => X = checkFlagNZ(readMem(ldx.addr))
+			| LDY(_) as ldy => Y = checkFlagNZ(readMem(ldy.addr))
+
+			| STA(_) as sta => writeMem(sta.addr,A)
+			| STX(_) as stx => writeMem(stx.addr,X)
+			| STY(_) as sty => writeMem(sty.addr,Y)
+
+			| TAX => X = checkFlagNZ(A)
+			| TXA => A = checkFlagNZ(X)
+			| TAY => Y = checkFlagNZ(A)
+			| TYA => A = checkFlagNZ(Y)
+			| TSX => X = checkFlagNZ(S)
+			| TXS => S = X
+
+			| PHA => implPush(A)
+			| PLA => A = checkFlagNZ(implPop())
+			| PHP => implPush(P.GetValue())
+			| PLP => P.SetValue(implPop())
+
+			| NOP => ()
+			| _ => throw NotImplementedException()
 
 		}
 		private implASL(m : byte) : byte {
@@ -550,6 +593,31 @@ namespace NESEmulator{
 			SP++;
 			def pt = (0x0100 | SP) :> ushort;//上位ビットは$01固定
 			Mem[pt];
+		}
+
+		private implCMP(reg: byte, m : byte) : void {
+			def result : int = reg - m;
+
+			P.Negative = conv_b(result & 0x80);
+			P.Carry = result >= 0x00 ;
+			P.Zero = result == 0;
+		}
+
+		private implINC(reg:byte) : byte {
+			def result = reg + 1;
+
+			checkFlagNZ(result)
+		}
+		private implDEC(reg:byte) : byte {
+			def result = reg - 1;
+
+			checkFlagNZ(result)
+		}
+
+		private checkFlagNZ(data:byte) : byte {
+			P.Negative = conv_b(data & 0x80);
+			P.Zero = data == 0;
+			data
 		}
 	}
 }
