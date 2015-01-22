@@ -41,12 +41,32 @@ namespace NESEmulator {
 		public static BRK_VECT_L : ushort = 0xfffe;
 		public static BRK_VECT_H : ushort = 0xffff;
 	//ppu control register($2000 ~ $2007)
-		private PPUControlRegister : PPUControl = PPUControl();
+		private PPUIO : array[IRegister[byte]] = array[
+				PPUControlRegister1() ,//TODO:<- { PPUMasterSlave = true },
+				PPUControlRegister2(),//R
+				PPUStatusRegister(),
+				Register(),//SpriteMemoryAddr
+				Register(),//SpriteMemoryData
+				Register(),//BGScrollOffset
+				Register(),//PPUMemoryAddr
+				Register(),//PPUMemoryData R/W
+			];
+		public enum PPUMemoryMap {
+			| PPUControlRegister1 = 0x0
+			| PPUControlRegister2 = 0x1
+			| PPUStatusRegister   = 0x2
+			| SpriteMemoryAddress = 0x3
+			| SpriteMemoryData    = 0x4
+			| BGScrollOffset      = 0x5
+			| PPUMemoryAddr       = 0x6
+			| PPUMemoryData       = 0x7
+		};
+		public selectPPURegister(addr:ushort) : IRegister[byte] { PPUIO[addr :> int]; }
+		public selectPPURegister(map:PPUMemoryMap) : IRegister[byte]  {	PPUIO[map :> int]; }
 	//apu control register($4000 ~ $4017)
 		private APIControlRegister : APUControl = APUControl();
 
 		private wram  : array[byte] = array(WRAM_SIZE :> int);
-		private ppuio : array[byte] = array(PPU_IO_SIZE :> int);
 		private apuio : array[byte] = array(APU_PAD_IO_SIZE :> int);
 	//exrom
 		private exram  : array[byte] = array(EXTEND_RAM_SIZE :> int);
@@ -58,7 +78,6 @@ namespace NESEmulator {
 	//
 		public Reset() : void {
 			Array.Clear(wram,0,wram.Length);
-			Array.Clear(ppuio,0,ppuio.Length);
 			Array.Clear(apuio,0,apuio.Length);
 			Array.Clear(exram,0,exram.Length);
 			Array.Clear(rom1,0,rom1.Length);
@@ -72,20 +91,20 @@ namespace NESEmulator {
 		public Read(addr:ushort) : byte {
 			def addr_i = addr :> int;
 			match(addr) {
-				| _ when addr < WRAM_MIRROR_ADDR => wram[addr_i % WRAM_SIZE];
-				| _ when addr < PPU_IO_MIRROR =>  ppuio[(addr_i - WRAM_MIRROR_ADDR)  % PPU_IO_SIZE];
+				| _ when addr < WRAM_MIRROR_ADDR => wram[addr_i % WRAM_SIZE]
+				| _ when addr < PPU_IO_MIRROR => selectPPURegister(((addr_i - WRAM_MIRROR_ADDR)  % PPU_IO_SIZE) :> ushort).GetValue()
 				| _ when addr < APU_PAD_IO_ADDR => 0x40
 				| _ when addr < EXTEND_ROM_ADDR => 0//EXROMは未実装
-				| _ when addr < EXTEND_RAM_ADDR => exram[addr_i - EXTEND_ROM_ADDR];
-				| _ when addr < PRG_ROM1_ADDR => rom1[addr_i - EXTEND_RAM_ADDR];
-				| _ => rom2[addr_i - PRG_ROM1_ADDR];
+				| _ when addr < EXTEND_RAM_ADDR => exram[addr_i - EXTEND_ROM_ADDR]
+				| _ when addr < PRG_ROM1_ADDR => rom1[addr_i - EXTEND_RAM_ADDR]
+				| _ => rom2[addr_i - PRG_ROM1_ADDR]
 			}
 		}
 		public Write(addr:ushort,data:byte) : void {
 			def addr_i = addr :> int;
 			match(addr) {
-				| _ when addr < WRAM_MIRROR_ADDR => wram[addr_i % WRAM_SIZE] = data;
-				| _ when addr < PPU_IO_MIRROR => ppuio[(addr_i - WRAM_MIRROR_ADDR)  % PPU_IO_SIZE] = data;
+				| _ when addr < WRAM_MIRROR_ADDR => wram[addr_i % WRAM_SIZE] = data
+				| _ when addr < PPU_IO_MIRROR => selectPPURegister(((addr_i - WRAM_MIRROR_ADDR)  % PPU_IO_SIZE) :> ushort).SetValue(data)
 				| _ when addr < APU_PAD_IO_ADDR => match(addr_i - PPU_IO_MIRROR) {
 						//TODO:SpriteDMAしような
 							| 0 => {
@@ -95,9 +114,9 @@ namespace NESEmulator {
 							| _ => ();
 						}
 				| _ when addr < EXTEND_ROM_ADDR => ()//ROM
-				| _ when addr < EXTEND_RAM_ADDR => exram[addr_i - EXTEND_ROM_ADDR] = data;
-				| _ when addr < PRG_ROM1_ADDR => ();
-				| _ => ();//rom2
+				| _ when addr < EXTEND_RAM_ADDR => exram[addr_i - EXTEND_ROM_ADDR] = data
+				| _ when addr < PRG_ROM1_ADDR => ()
+				| _ => ()//rom2
 			}
 		}
 	}

@@ -8,12 +8,18 @@ using System.Collections.Generic;
 using System.Linq;
 
 namespace NESEmulator {
-	
+
 	public interface IRegister[T] {
 		GetValue() : T;
 		SetValue(data:T) : void;
 	}
+	public class Register : IRegister[byte] {
+		mutable reg : byte = 0x0;
 
+		public GetValue() : byte{ reg }
+		public SetValue(data : byte) : void {reg = data}
+
+	}
 	public class ProcessorStatus : IRegister[byte] {
 		[Flags]
 		public enum StatusRegister {
@@ -32,25 +38,74 @@ namespace NESEmulator {
 		public GetValue() : byte { reg :> byte }
 		public SetValue(data : byte) : void { reg = data :> StatusRegister }
 	}
-	public class PPUControl : IRegister[byte] {
+	//$2000
+	public class PPUControlRegister1 : IRegister[byte] {
 		[Flags]
 		public enum StatusRegister {
-			| CONTROL_1 = 0x1
-			| CONTROL_2 = 0x2
-			| STATUS = 0x4
-			| SPRITE_ADDR = 0x8
-			| SPRITE_IO = 0x10
-			| BG_SCROLL = 0x20
-			| MEMORY_ADDR = 0x40
-			| IO_REGISTER = 0x80
+			| NameTableAddressL = 0x1//0:$2000 1:$2400 2:$2800 3:$3200
+			| NameTableAddressH = 0x2
+
+			| PPUAddressIncrement = 0x4//0 +=1 1 += 32
+			| SpritePatternTableAddress = 0x8//0:$0000 1:$1000
+			| BGPatternTableAddress = 0x10//0:$0000 1:$1000
+			| SpriteSize = 0x20//0:8x8 1:8x16
+			| PPUMasterSlave = 0x40//always 1
+			| NMIOnVBlank = 0x80//1:enable interrupt
 		};
-		[FlagAccessor (CONTROL_1,CONTROL_2,STATUS,SPRITE_ADDR,SPRITE_IO,BG_SCROLL,MEMORY_ADDR,IO_REGISTER,flags=WantSetter)]
+		[FlagAccessor (
+			NameTableAddressL,NameTableAddressH,PPUAddressIncrement,SpritePatternTableAddress,
+			BGPatternTableAddress,SpriteSize,PPUMasterSlave,NMIOnVBlank,
+		flags=WantSetter)]
 		mutable reg : StatusRegister;
 
 		public GetValue() : byte { reg :> byte }
 		public SetValue(data : byte) : void { reg = data :> StatusRegister }
-
 	}
+	//$2001
+	public class PPUControlRegister2 : IRegister[byte] {
+		[Flags]
+		public enum StatusRegister {
+			| DisplayType = 0x1//0:color 1:mono
+			| BGMask = 0x2//0:左8ピクセルを書かない 1:書く
+			| SpriteMask = 0x4//
+			| BGEnable = 0x8
+			| SpriteEnable = 0x10
+			| BGColorG = 0x20//000 is black
+			| BGColorB = 0x40
+			| BGColorR = 0x80
+		};
+		[FlagAccessor (
+			DisplayType,BGMask,SpriteMask,BGEnable,
+			SpriteEnable,BGColorG,BGColorB,BGColorR,
+		flags=WantSetter)]
+		mutable reg : StatusRegister;
+
+		public GetValue() : byte { reg :> byte }
+		public SetValue(data : byte) : void { reg = data :> StatusRegister }
+	}
+	//$2002
+	public class PPUStatusRegister : IRegister[byte] {
+		[Flags]
+		public enum StatusRegister {
+			| NC0 = 0x1
+			| NC1 = 0x2
+			| NC2 = 0x4
+			| NC3 = 0x8
+			| NC4 = 0x10
+			| ScanLineSprite = 0x20//0:<8 1:>9
+			| SpriteHit = 0x40//hit is 1
+			| VBlankFlag = 0x80//VBlank is enable
+		};
+		[FlagAccessor (
+			NC0,NC1,NC2,NC3,
+			NC4,ScanLineSprite,SpriteHit,VBlankFlag,
+		flags=WantSetter)]
+		mutable reg : StatusRegister;
+
+		public GetValue() : byte { reg :> byte }
+		public SetValue(data : byte) : void { reg = data :> StatusRegister }
+	}
+
 	public class APUControl : IRegister[ushort] {
 		[Flags]
 		public enum StatusRegister {
