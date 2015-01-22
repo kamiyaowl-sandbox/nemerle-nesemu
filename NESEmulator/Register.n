@@ -11,6 +11,7 @@ namespace NESEmulator {
 	
 	public interface IRegister[T] {
 		GetValue() : T;
+		SetValue(data:T) : void;
 	}
 
 	public class ProcessorStatus : IRegister[byte] {
@@ -29,6 +30,7 @@ namespace NESEmulator {
 		mutable reg : StatusRegister;
 
 		public GetValue() : byte { reg :> byte }
+		public SetValue(data : byte) : void { reg = data }
 	}
 	public class PPUControl : IRegister[byte] {
 		[Flags]
@@ -46,6 +48,8 @@ namespace NESEmulator {
 		mutable reg : StatusRegister;
 
 		public GetValue() : byte { reg :> byte }
+		public SetValue(data : byte) : void { reg = data }
+
 	}
 	public class APUControl : IRegister[ushort] {
 		[Flags]
@@ -93,6 +97,8 @@ namespace NESEmulator {
 		mutable reg : StatusRegister;
 
 		public GetValue() : ushort{ reg :> ushort }
+		public SetValue(data : byte) : void { reg = data }
+
 	}
 
 }
