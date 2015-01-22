@@ -55,255 +55,255 @@ namespace NESEmulator{
 			| AbsoluteIndirect//op1, op2 => {{op2, op1} + 1, {op2, op1}} :addr
 		};
 		public variant OPCode {
-			| ADC { addr:Addressing }
-			| SBC { addr:Addressing }
-			| AND { addr:Addressing }//a
-			| ORA { addr:Addressing }//a
-			| EOR { addr:Addressing }//a
-			| ASL { addr:Addressing }//a <<
-			| LSR { addr:Addressing }//a >>
-			| ROL { addr:Addressing }// << rotate
-			| ROR { addr:Addressing }// >> rotate
+			| ADC {addr:Addressing ; clk:byte}
+			| SBC {addr:Addressing ; clk:byte}
+			| AND {addr:Addressing ; clk:byte}//a
+			| ORA {addr:Addressing ; clk:byte}//a
+			| EOR {addr:Addressing ; clk:byte}//a
+			| ASL {addr:Addressing ; clk:byte}//a <<
+			| LSR {addr:Addressing ; clk:byte}//a >>
+			| ROL {addr:Addressing ; clk:byte}// << rotate
+			| ROR {addr:Addressing ; clk:byte}// >> rotate
 
-			| BCC   //no carry jump
-			| BCS   //carry jump
-			| BEQ  // == jump
-			| BNE   // != jump
-			| BVC   //no ovf jump
-			| BVS   //ovf jump
-			| BPL  //jump if +
-			| BMI   //jump if -
+			| BCC { clk:byte }//no carry jump
+			| BCS { clk:byte }  //carry jump
+			| BEQ { clk:byte } // == jump
+			| BNE { clk:byte }  // != jump
+			| BVC { clk:byte }  //no ovf jump
+			| BVS { clk:byte }  //ovf jump
+			| BPL { clk:byte } //jump if +
+			| BMI { clk:byte }  //jump if -
 
-			| BIT { addr:Addressing }//and a
+			| BIT {addr:Addressing ; clk:byte}//and a
 
-			| JMP { addr:Addressing }
-			| JSR { addr:Addressing }//call subroutine
-			| RTS //return subroutine
-			| BRK //software interrupt
-			| RTI //return interrupt
+			| JMP {addr:Addressing ; clk:byte}
+			| JSR {addr:Addressing ; clk:byte}//call subroutine
+			| RTS { clk:byte }//return subroutine
+			| BRK { clk:byte }//software interrupt
+			| RTI { clk:byte }//return interrupt
 
-			| CMP { addr:Addressing }//a
-			| CPX { addr:Addressing }
-			| CPY { addr:Addressing }
+			| CMP {addr:Addressing ; clk:byte}//a
+			| CPX {addr:Addressing ; clk:byte}
+			| CPY {addr:Addressing ; clk:byte}
 
-			| INC { addr:Addressing }//a
-			| DEC { addr:Addressing }//a
+			| INC {addr:Addressing ; clk:byte}//a
+			| DEC {addr:Addressing ; clk:byte}//a
 
-			| INX
-			| DEX
-			| INY
-			| DEY
+			| INX { clk:byte }
+			| DEX { clk:byte }
+			| INY { clk:byte }
+			| DEY { clk:byte }
 
-			| CLC // clear c
-			| SEC // set c
-			| CLI // clear i
-			| SEI // set i
-			| CLD // clear d
-			| SED // set d
-			| CLV // clear v
+			| CLC { clk:byte }// clear c
+			| SEC { clk:byte }// set c
+			| CLI { clk:byte }// clear i
+			| SEI { clk:byte }// set i
+			| CLD { clk:byte }// clear d
+			| SED { clk:byte }// set d
+			| CLV { clk:byte }// clear v
 
-			| LDA { addr:Addressing }
-			| LDX { addr:Addressing }
-			| LDY { addr:Addressing }
-			| STA { addr:Addressing }
-			| STX { addr:Addressing }
-			| STY { addr:Addressing }
+			| LDA {addr:Addressing ; clk:byte}
+			| LDX {addr:Addressing ; clk:byte}
+			| LDY {addr:Addressing ; clk:byte}
+			| STA {addr:Addressing ; clk:byte}
+			| STX {addr:Addressing ; clk:byte}
+			| STY {addr:Addressing ; clk:byte}
 
-			| TAX
-			| TXA
-			| TAY
-			| TYA
-			| TXS
-			| TSX
+			| TAX { clk:byte }
+			| TXA { clk:byte }
+			| TAY { clk:byte }
+			| TYA { clk:byte }
+			| TXS { clk:byte }
+			| TSX { clk:byte }
 
-			| PHA
-			| PLA
-			| PHP
-			| PLP
+			| PHA { clk:byte }
+			| PLA { clk:byte }
+			| PHP { clk:byte }
+			| PLP { clk:byte }
 
-			| NOP //none
+			| NOP { clk:byte }//none
 
 		};
 		public Convert(code : byte) : OPCode {
-			| 0x69 => OPCode.ADC(Addressing.Immediate())
-			| 0x65 => OPCode.ADC(Addressing.ZeroPage())
-			| 0x75 => OPCode.ADC(Addressing.IndexedZeroPageX())
-			| 0x6d => OPCode.ADC(Addressing.Absolute())
-			| 0x7d => OPCode.ADC(Addressing.IndexedAbsoluteX())
-			| 0x79 => OPCode.ADC(Addressing.IndexedAbsoluteY())
-			| 0x61 => OPCode.ADC(Addressing.IndexedIndirectX())
-			| 0x71 => OPCode.ADC(Addressing.IndexedIndirectY())
+			| 0x69 => OPCode.ADC(Addressing.Immediate(),2)
+			| 0x65 => OPCode.ADC(Addressing.ZeroPage(),3)
+			| 0x75 => OPCode.ADC(Addressing.IndexedZeroPageX(),4)
+			| 0x6d => OPCode.ADC(Addressing.Absolute(),4)
+			| 0x7d => OPCode.ADC(Addressing.IndexedAbsoluteX(),4)
+			| 0x79 => OPCode.ADC(Addressing.IndexedAbsoluteY(),4)
+			| 0x61 => OPCode.ADC(Addressing.IndexedIndirectX(),6)
+			| 0x71 => OPCode.ADC(Addressing.IndexedIndirectY(),5)
 
-			| 0xe9 => OPCode.SBC(Addressing.Immediate())
-			| 0xe5 => OPCode.SBC(Addressing.ZeroPage())
-			| 0xf5 => OPCode.SBC(Addressing.IndexedZeroPageX())
-			| 0xed => OPCode.SBC(Addressing.Absolute())
-			| 0xfd => OPCode.SBC(Addressing.IndexedAbsoluteX())
-			| 0xf9 => OPCode.SBC(Addressing.IndexedAbsoluteY())
-			| 0xe1 => OPCode.SBC(Addressing.IndexedIndirectX())
-			| 0xf1 => OPCode.SBC(Addressing.IndexedIndirectY())
+			| 0xe9 => OPCode.SBC(Addressing.Immediate(),2)
+			| 0xe5 => OPCode.SBC(Addressing.ZeroPage(),3)
+			| 0xf5 => OPCode.SBC(Addressing.IndexedZeroPageX(),4)
+			| 0xed => OPCode.SBC(Addressing.Absolute(),4)
+			| 0xfd => OPCode.SBC(Addressing.IndexedAbsoluteX(),4)
+			| 0xf9 => OPCode.SBC(Addressing.IndexedAbsoluteY(),4)
+			| 0xe1 => OPCode.SBC(Addressing.IndexedIndirectX(),6)
+			| 0xf1 => OPCode.SBC(Addressing.IndexedIndirectY(),5)
 
-			| 0x29 => OPCode.AND(Addressing.Immediate())
-			| 0x25 => OPCode.AND(Addressing.ZeroPage())
-			| 0x35 => OPCode.AND(Addressing.IndexedZeroPageX())
-			| 0x2d => OPCode.AND(Addressing.Absolute())
-			| 0x3d => OPCode.AND(Addressing.IndexedAbsoluteX())
-			| 0x39 => OPCode.AND(Addressing.IndexedAbsoluteY())
-			| 0x21 => OPCode.AND(Addressing.IndexedIndirectX())
-			| 0x31 => OPCode.AND(Addressing.IndexedIndirectY())
+			| 0x29 => OPCode.AND(Addressing.Immediate(),2)
+			| 0x25 => OPCode.AND(Addressing.ZeroPage(),3)
+			| 0x35 => OPCode.AND(Addressing.IndexedZeroPageX(),4)
+			| 0x2d => OPCode.AND(Addressing.Absolute(),4)
+			| 0x3d => OPCode.AND(Addressing.IndexedAbsoluteX(),4)
+			| 0x39 => OPCode.AND(Addressing.IndexedAbsoluteY(),4)
+			| 0x21 => OPCode.AND(Addressing.IndexedIndirectX(),6)
+			| 0x31 => OPCode.AND(Addressing.IndexedIndirectY(),5)
 
-			| 0x09 => OPCode.ORA(Addressing.Immediate())
-			| 0x05 => OPCode.ORA(Addressing.ZeroPage())
-			| 0x15 => OPCode.ORA(Addressing.IndexedZeroPageX())
-			| 0x0d => OPCode.ORA(Addressing.Absolute())
-			| 0x1d => OPCode.ORA(Addressing.IndexedAbsoluteX())
-			| 0x19 => OPCode.ORA(Addressing.IndexedAbsoluteY())
-			| 0x01 => OPCode.ORA(Addressing.IndexedIndirectX())
-			| 0x11 => OPCode.ORA(Addressing.IndexedIndirectY())
+			| 0x09 => OPCode.ORA(Addressing.Immediate(),2)
+			| 0x05 => OPCode.ORA(Addressing.ZeroPage(),3)
+			| 0x15 => OPCode.ORA(Addressing.IndexedZeroPageX(),4)
+			| 0x0d => OPCode.ORA(Addressing.Absolute(),4)
+			| 0x1d => OPCode.ORA(Addressing.IndexedAbsoluteX(),4)
+			| 0x19 => OPCode.ORA(Addressing.IndexedAbsoluteY(),4)
+			| 0x01 => OPCode.ORA(Addressing.IndexedIndirectX(),6)
+			| 0x11 => OPCode.ORA(Addressing.IndexedIndirectY(),5)
 
-			| 0x49 => OPCode.EOR(Addressing.Immediate())
-			| 0x45 => OPCode.EOR(Addressing.ZeroPage())
-			| 0x55 => OPCode.EOR(Addressing.IndexedZeroPageX())
-			| 0x4d => OPCode.EOR(Addressing.Absolute())
-			| 0x5d => OPCode.EOR(Addressing.IndexedAbsoluteX())
-			| 0x59 => OPCode.EOR(Addressing.IndexedAbsoluteY())
-			| 0x41 => OPCode.EOR(Addressing.IndexedIndirectX())
-			| 0x51 => OPCode.EOR(Addressing.IndexedIndirectY())
+			| 0x49 => OPCode.EOR(Addressing.Immediate(),2)
+			| 0x45 => OPCode.EOR(Addressing.ZeroPage(),3)
+			| 0x55 => OPCode.EOR(Addressing.IndexedZeroPageX(),4)
+			| 0x4d => OPCode.EOR(Addressing.Absolute(),4)
+			| 0x5d => OPCode.EOR(Addressing.IndexedAbsoluteX(),4)
+			| 0x59 => OPCode.EOR(Addressing.IndexedAbsoluteY(),4)
+			| 0x41 => OPCode.EOR(Addressing.IndexedIndirectX(),6)
+			| 0x51 => OPCode.EOR(Addressing.IndexedIndirectY(),5)
 
-			| 0x0a => OPCode.ASL(Addressing.Accumulator())
-			| 0x06 => OPCode.ASL(Addressing.ZeroPage())
-			| 0x16 => OPCode.ASL(Addressing.IndexedZeroPageX())
-			| 0x0e => OPCode.ASL(Addressing.Absolute())
-			| 0x1e => OPCode.ASL(Addressing.IndexedAbsoluteX())
+			| 0x0a => OPCode.ASL(Addressing.Accumulator(),2)
+			| 0x06 => OPCode.ASL(Addressing.ZeroPage(),5)
+			| 0x16 => OPCode.ASL(Addressing.IndexedZeroPageX(),6)
+			| 0x0e => OPCode.ASL(Addressing.Absolute(),6)
+			| 0x1e => OPCode.ASL(Addressing.IndexedAbsoluteX(),6)
 
-			| 0x4a => OPCode.LSR(Addressing.Accumulator())
-			| 0x46 => OPCode.LSR(Addressing.ZeroPage())
-			| 0x56 => OPCode.LSR(Addressing.IndexedZeroPageX())
-			| 0x4e => OPCode.LSR(Addressing.Absolute())
-			| 0x5e => OPCode.LSR(Addressing.IndexedAbsoluteX())
+			| 0x4a => OPCode.LSR(Addressing.Accumulator(),2)
+			| 0x46 => OPCode.LSR(Addressing.ZeroPage(),5)
+			| 0x56 => OPCode.LSR(Addressing.IndexedZeroPageX(),6)
+			| 0x4e => OPCode.LSR(Addressing.Absolute(),6)
+			| 0x5e => OPCode.LSR(Addressing.IndexedAbsoluteX(),6)
 
-			| 0x2a => OPCode.ROL(Addressing.Accumulator())
-			| 0x26 => OPCode.ROL(Addressing.ZeroPage())
-			| 0x36 => OPCode.ROL(Addressing.IndexedZeroPageX())
-			| 0x2e => OPCode.ROL(Addressing.Absolute())
-			| 0x3e => OPCode.ROL(Addressing.IndexedAbsoluteX())
+			| 0x2a => OPCode.ROL(Addressing.Accumulator(),2)
+			| 0x26 => OPCode.ROL(Addressing.ZeroPage(),5)
+			| 0x36 => OPCode.ROL(Addressing.IndexedZeroPageX(),6)
+			| 0x2e => OPCode.ROL(Addressing.Absolute(),6)
+			| 0x3e => OPCode.ROL(Addressing.IndexedAbsoluteX(),6)
 
-			| 0x6a => OPCode.ROR(Addressing.Accumulator())
-			| 0x66 => OPCode.ROR(Addressing.ZeroPage())
-			| 0x76 => OPCode.ROR(Addressing.IndexedZeroPageX())
-			| 0x6e => OPCode.ROR(Addressing.Absolute())
-			| 0x7e => OPCode.ROR(Addressing.IndexedAbsoluteX())
+			| 0x6a => OPCode.ROR(Addressing.Accumulator(),2)
+			| 0x66 => OPCode.ROR(Addressing.ZeroPage(),5)
+			| 0x76 => OPCode.ROR(Addressing.IndexedZeroPageX(),6)
+			| 0x6e => OPCode.ROR(Addressing.Absolute(),6)
+			| 0x7e => OPCode.ROR(Addressing.IndexedAbsoluteX(),6)
 
-			| 0x90 => OPCode.BCC()
-			| 0xb0 => OPCode.BCS()
-			| 0xf0 => OPCode.BEQ()
-			| 0xd0 => OPCode.BNE()
-			| 0x50 => OPCode.BVC()
-			| 0x70 => OPCode.BVS()
-			| 0x10 => OPCode.BPL()
-			| 0x30 => OPCode.BMI()
+			| 0x90 => OPCode.BCC(2)
+			| 0xb0 => OPCode.BCS(2)
+			| 0xf0 => OPCode.BEQ(2)
+			| 0xd0 => OPCode.BNE(2)
+			| 0x50 => OPCode.BVC(2)
+			| 0x70 => OPCode.BVS(2)
+			| 0x10 => OPCode.BPL(2)
+			| 0x30 => OPCode.BMI(2)
 
-			| 0x24 => OPCode.BIT(Addressing.ZeroPage())
-			| 0x2c => OPCode.BIT(Addressing.Absolute())
+			| 0x24 => OPCode.BIT(Addressing.ZeroPage(),3)
+			| 0x2c => OPCode.BIT(Addressing.Absolute(),4)
 
-			| 0x4c => OPCode.JMP(Addressing.Absolute())
-			| 0x6c => OPCode.JMP(Addressing.IndexedIndirectX())//TODO?
+			| 0x4c => OPCode.JMP(Addressing.Absolute(),3)
+			| 0x6c => OPCode.JMP(Addressing.IndexedIndirectX(),5)//TODO?
 
-			| 0x20 => OPCode.JSR(Addressing.Absolute())
-			| 0x60 => OPCode.RTS()
-			| 0x00 => OPCode.BRK()
-			| 0x40 => OPCode.RTI()
+			| 0x20 => OPCode.JSR(Addressing.Absolute(),6)
+			| 0x60 => OPCode.RTS(6)
+			| 0x00 => OPCode.BRK(7)
+			| 0x40 => OPCode.RTI(6)
 
-			| 0xc9 => OPCode.CMP(Addressing.Immediate())
-			| 0xc5 => OPCode.CMP(Addressing.ZeroPage())
-			| 0xd5 => OPCode.CMP(Addressing.IndexedZeroPageX())
-			| 0xcd => OPCode.CMP(Addressing.Absolute())
-			| 0xdd => OPCode.CMP(Addressing.IndexedAbsoluteX())
-			| 0xd9 => OPCode.CMP(Addressing.IndexedAbsoluteY())
-			| 0xc1 => OPCode.CMP(Addressing.IndexedIndirectX())
-			| 0xd1 => OPCode.CMP(Addressing.IndexedIndirectY())
+			| 0xc9 => OPCode.CMP(Addressing.Immediate(),2)
+			| 0xc5 => OPCode.CMP(Addressing.ZeroPage(),3)
+			| 0xd5 => OPCode.CMP(Addressing.IndexedZeroPageX(),4)
+			| 0xcd => OPCode.CMP(Addressing.Absolute(),4)
+			| 0xdd => OPCode.CMP(Addressing.IndexedAbsoluteX(),4)
+			| 0xd9 => OPCode.CMP(Addressing.IndexedAbsoluteY(),4)
+			| 0xc1 => OPCode.CMP(Addressing.IndexedIndirectX(),6)
+			| 0xd1 => OPCode.CMP(Addressing.IndexedIndirectY(),5)
 
-			| 0xe0 => OPCode.CPX(Addressing.Immediate())
-			| 0xe4 => OPCode.CPX(Addressing.ZeroPage())
-			| 0xec => OPCode.CPX(Addressing.Absolute())
+			| 0xe0 => OPCode.CPX(Addressing.Immediate(),2)
+			| 0xe4 => OPCode.CPX(Addressing.ZeroPage(),3)
+			| 0xec => OPCode.CPX(Addressing.Absolute(),4)
 
-			| 0xC0 => OPCode.CPY(Addressing.Immediate())
-			| 0xc4 => OPCode.CPY(Addressing.ZeroPage())
-			| 0xcc => OPCode.CPY(Addressing.Absolute())
+			| 0xC0 => OPCode.CPY(Addressing.Immediate(),2)
+			| 0xc4 => OPCode.CPY(Addressing.ZeroPage(),3)
+			| 0xcc => OPCode.CPY(Addressing.Absolute(),4)
 
-			| 0xe6 => OPCode.INC(Addressing.ZeroPage())
-			| 0xf6 => OPCode.INC(Addressing.IndexedZeroPageX())
-			| 0xee => OPCode.INC(Addressing.Absolute())
-			| 0xfe => OPCode.INC(Addressing.IndexedAbsoluteX())
+			| 0xe6 => OPCode.INC(Addressing.ZeroPage(),5)
+			| 0xf6 => OPCode.INC(Addressing.IndexedZeroPageX(),6)
+			| 0xee => OPCode.INC(Addressing.Absolute(),6)
+			| 0xfe => OPCode.INC(Addressing.IndexedAbsoluteX(),6)
 
-			| 0xc6 => OPCode.DEC(Addressing.ZeroPage())
-			| 0xd6 => OPCode.DEC(Addressing.IndexedZeroPageX())
-			| 0xce => OPCode.DEC(Addressing.Absolute())
-			| 0xde => OPCode.DEC(Addressing.IndexedAbsoluteX())
+			| 0xc6 => OPCode.DEC(Addressing.ZeroPage(),5)
+			| 0xd6 => OPCode.DEC(Addressing.IndexedZeroPageX(),6)
+			| 0xce => OPCode.DEC(Addressing.Absolute(),6)
+			| 0xde => OPCode.DEC(Addressing.IndexedAbsoluteX(),6)
 
-			| 0xe8 => OPCode.INX()
-			| 0xca => OPCode.DEX()
-			| 0xc8 => OPCode.INY()
-			| 0x88 => OPCode.DEY()
+			| 0xe8 => OPCode.INX(2)
+			| 0xca => OPCode.DEX(2)
+			| 0xc8 => OPCode.INY(2)
+			| 0x88 => OPCode.DEY(2)
 
-			| 0x18 => OPCode.CLC()
-			| 0x38 => OPCode.SEC()
-			| 0x58 => OPCode.CLI()
-			| 0x78 => OPCode.SEI()
-			| 0xd8 => OPCode.CLD()
-			| 0xf8 => OPCode.SED()
-			| 0xb8 => OPCode.CLV()
+			| 0x18 => OPCode.CLC(2)
+			| 0x38 => OPCode.SEC(2)
+			| 0x58 => OPCode.CLI(2)
+			| 0x78 => OPCode.SEI(2)
+			| 0xd8 => OPCode.CLD(2)
+			| 0xf8 => OPCode.SED(2)
+			| 0xb8 => OPCode.CLV(2)
 
-			| 0xa9 => OPCode.LDA(Addressing.Immediate())
-			| 0xa5 => OPCode.LDA(Addressing.ZeroPage())
-			| 0xb5 => OPCode.LDA(Addressing.IndexedZeroPageX())
-			| 0xad => OPCode.LDA(Addressing.Absolute())
-			| 0xbd => OPCode.LDA(Addressing.IndexedAbsoluteX())
-			| 0xb9 => OPCode.LDA(Addressing.IndexedAbsoluteY())
-			| 0xa1 => OPCode.LDA(Addressing.IndexedIndirectX())
-			| 0xb1 => OPCode.LDA(Addressing.IndexedIndirectY())
+			| 0xa9 => OPCode.LDA(Addressing.Immediate(),2)
+			| 0xa5 => OPCode.LDA(Addressing.ZeroPage(),3)
+			| 0xb5 => OPCode.LDA(Addressing.IndexedZeroPageX(),4)
+			| 0xad => OPCode.LDA(Addressing.Absolute(),4)
+			| 0xbd => OPCode.LDA(Addressing.IndexedAbsoluteX(),4)
+			| 0xb9 => OPCode.LDA(Addressing.IndexedAbsoluteY(),4)
+			| 0xa1 => OPCode.LDA(Addressing.IndexedIndirectX(),6)
+			| 0xb1 => OPCode.LDA(Addressing.IndexedIndirectY(),5)
 
-			| 0xa2 => OPCode.LDX(Addressing.Immediate())
-			| 0xa6 => OPCode.LDX(Addressing.ZeroPage())
-			| 0xb6 => OPCode.LDX(Addressing.IndexedZeroPageY())
-			| 0xae => OPCode.LDX(Addressing.Absolute())
-			| 0xbe => OPCode.LDX(Addressing.IndexedAbsoluteY())
+			| 0xa2 => OPCode.LDX(Addressing.Immediate(),2)
+			| 0xa6 => OPCode.LDX(Addressing.ZeroPage(),3)
+			| 0xb6 => OPCode.LDX(Addressing.IndexedZeroPageY(),4)
+			| 0xae => OPCode.LDX(Addressing.Absolute(),4)
+			| 0xbe => OPCode.LDX(Addressing.IndexedAbsoluteY(),4)
 
-			| 0xa0 => OPCode.LDY(Addressing.Immediate())
-			| 0xa4 => OPCode.LDY(Addressing.ZeroPage())
-			| 0xb4 => OPCode.LDY(Addressing.IndexedZeroPageX())
-			| 0xac => OPCode.LDY(Addressing.Absolute())
-			| 0xbc => OPCode.LDY(Addressing.IndexedAbsoluteX())
+			| 0xa0 => OPCode.LDY(Addressing.Immediate(),2)
+			| 0xa4 => OPCode.LDY(Addressing.ZeroPage(),3)
+			| 0xb4 => OPCode.LDY(Addressing.IndexedZeroPageX(),4)
+			| 0xac => OPCode.LDY(Addressing.Absolute(),4)
+			| 0xbc => OPCode.LDY(Addressing.IndexedAbsoluteX(),4)
 
-			| 0x85 => OPCode.STA(Addressing.ZeroPage())
-			| 0x95 => OPCode.STA(Addressing.IndexedZeroPageX())
-			| 0x8d => OPCode.STA(Addressing.Absolute())
-			| 0x9d => OPCode.STA(Addressing.IndexedAbsoluteX())
-			| 0x99 => OPCode.STA(Addressing.IndexedAbsoluteY())
-			| 0x81 => OPCode.STA(Addressing.IndexedIndirectX())
-			| 0x91 => OPCode.STA(Addressing.IndexedIndirectY())
+			| 0x85 => OPCode.STA(Addressing.ZeroPage(),3)
+			| 0x95 => OPCode.STA(Addressing.IndexedZeroPageX(),4)
+			| 0x8d => OPCode.STA(Addressing.Absolute(),4)
+			| 0x9d => OPCode.STA(Addressing.IndexedAbsoluteX(),4)
+			| 0x99 => OPCode.STA(Addressing.IndexedAbsoluteY(),4)
+			| 0x81 => OPCode.STA(Addressing.IndexedIndirectX(),4)
+			| 0x91 => OPCode.STA(Addressing.IndexedIndirectY(),6)
 
-			| 0x86 => OPCode.STX(Addressing.ZeroPage())
-			| 0x96 => OPCode.STX(Addressing.IndexedZeroPageY())
-			| 0x8e => OPCode.STX(Addressing.Absolute())
+			| 0x86 => OPCode.STX(Addressing.ZeroPage(),3)
+			| 0x96 => OPCode.STX(Addressing.IndexedZeroPageY(),4)
+			| 0x8e => OPCode.STX(Addressing.Absolute(),4)
 
-			| 0x84 => OPCode.STY(Addressing.ZeroPage())
-			| 0x94 => OPCode.STY(Addressing.IndexedZeroPageX())
-			| 0x8c => OPCode.STY(Addressing.Absolute())
+			| 0x84 => OPCode.STY(Addressing.ZeroPage(),3)
+			| 0x94 => OPCode.STY(Addressing.IndexedZeroPageX(),4)
+			| 0x8c => OPCode.STY(Addressing.Absolute(),4)
 
-			| 0xaa => OPCode.TAX()
-			| 0x8a => OPCode.TXA()
-			| 0xa8 => OPCode.TAY()
-			| 0x98 => OPCode.TYA()
-			| 0x9a => OPCode.TXS()
-			| 0xba => OPCode.TSX()
+			| 0xaa => OPCode.TAX(2)
+			| 0x8a => OPCode.TXA(2)
+			| 0xa8 => OPCode.TAY(2)
+			| 0x98 => OPCode.TYA(2)
+			| 0x9a => OPCode.TXS(2)
+			| 0xba => OPCode.TSX(2)
 
-			| 0x48 => OPCode.PHA()
-			| 0x68 => OPCode.PLA()
-			| 0x08 => OPCode.PHP()
-			| 0x28 => OPCode.PLP()
+			| 0x48 => OPCode.PHA(3)
+			| 0x68 => OPCode.PLA(4)
+			| 0x08 => OPCode.PHP(3)
+			| 0x28 => OPCode.PLP(4)
 
-			| 0xea => OPCode.NOP()
+			| 0xea => OPCode.NOP(2)
 
 			| _ => throw Exception()
 
@@ -360,7 +360,7 @@ namespace NESEmulator{
 		public Execute(op : OPCode) : void {
 				// Operation
 				//NVZC
-			| ADC(_) as adc => {
+			| ADC as adc => {
 					//A + M + C -> A
 					def m = readMem(adc.addr);
 					def result = (A + m + conv_i(P.Carry)) :> ushort;
@@ -372,7 +372,7 @@ namespace NESEmulator{
 
 					A = result :> byte;
 				}
-			| SBC(_) as sbc => {
+			| SBC as sbc => {
 					//A - M - notC -> A
 					def m = readMem(sbc.addr);
 					def result = (A - m - conv_i(!P.Carry)) :> ushort;
@@ -386,21 +386,21 @@ namespace NESEmulator{
 				}
 				// Logic Operation
 				//NZ
-			| AND(_) as an => {
+			| AND as an => {
 					//A and M -> A
 					def m = readMem(an.addr);
 					def result = (A & m);
 
 					A = checkFlagNZ(result);
 				}
-			| ORA(_) as ora => {
+			| ORA as ora => {
 					//A or M -> A
 					def m = readMem(ora.addr);
 					def result = (A | m);
 
 					A = checkFlagNZ(result);
 				}
-			| EOR(_) as eor => {
+			| EOR as eor => {
 					//A xor M -> A
 					def m = readMem(eor.addr);
 					def result = (A ^ m);
@@ -409,19 +409,19 @@ namespace NESEmulator{
 				}
 				// Shift, Rotation
 			| ASL(addr = Accumulator) => A = implASL(A)
-			| ASL(_) as asl => {
+			| ASL as asl => {
 					def m = readMem(asl.addr);
 					def result = implASL(m);
 					writeMem(asl.addr,result);
 				}
 			| LSR(addr = Accumulator) => A = implLSR(A)
-			| LSR(_) as asl => {
+			| LSR as asl => {
 					def m = readMem(asl.addr);
 					def result = implLSR(m);
 					writeMem(asl.addr,result);
 				}
 			| ROL(addr = Accumulator) => A = implROL(A)
-			| ROL(_) as rol => {
+			| ROL as rol => {
 					def m = readMem(rol.addr);
 					def result = implROL(m);
 					writeMem(rol.addr,result);
@@ -483,15 +483,15 @@ namespace NESEmulator{
 					PC = ((pch << 8) & pcl) + 1;
 				}
 
-			| CMP(_) as cmp => implCMP(A,readMem(cmp.addr))
-			| CPX(_) as cpx => implCMP(X,readMem(cpx.addr))
-			| CPY(_) as cpy => implCMP(Y,readMem(cpy.addr))
+			| CMP as cmp => implCMP(A,readMem(cmp.addr))
+			| CPX as cpx => implCMP(X,readMem(cpx.addr))
+			| CPY as cpy => implCMP(Y,readMem(cpy.addr))
 
-			| INC(_) as inc => {
+			| INC as inc => {
 					def addr = readAddr(inc.addr);
 					Mem[addr] = implINC(Mem[addr]);
 				}
-			| DEC(_) as dec => {
+			| DEC as dec => {
 					def addr = readAddr(dec.addr);
 					Mem[addr] = implDEC(Mem[addr]);
 				}
@@ -508,13 +508,13 @@ namespace NESEmulator{
 			| SED => P.Decimal = true
 			| CLV => P.Overflow = false
 
-			| LDA(_) as lda => A = checkFlagNZ(readMem(lda.addr))
-			| LDX(_) as ldx => X = checkFlagNZ(readMem(ldx.addr))
-			| LDY(_) as ldy => Y = checkFlagNZ(readMem(ldy.addr))
+			| LDA as lda => A = checkFlagNZ(readMem(lda.addr))
+			| LDX as ldx => X = checkFlagNZ(readMem(ldx.addr))
+			| LDY as ldy => Y = checkFlagNZ(readMem(ldy.addr))
 
-			| STA(_) as sta => writeMem(sta.addr,A)
-			| STX(_) as stx => writeMem(stx.addr,X)
-			| STY(_) as sty => writeMem(sty.addr,Y)
+			| STA as sta => writeMem(sta.addr,A)
+			| STX as stx => writeMem(stx.addr,X)
+			| STY as sty => writeMem(sty.addr,Y)
 
 			| TAX => X = checkFlagNZ(A)
 			| TXA => A = checkFlagNZ(X)
