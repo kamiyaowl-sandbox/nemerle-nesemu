@@ -41,7 +41,8 @@ namespace NESEmulator {
 		public static BRK_VECT_L : ushort = 0xfffe;
 		public static BRK_VECT_H : ushort = 0xffff;
 	//ppu control register($2000 ~ $2007)
-		private PPUIO : array[IRegister[byte]] = array[
+		[Accessor(PPUIO,flags = WantSetter)]
+		mutable ppuio : array[IRegister[byte]] = array[
 				PPUControlRegister1() ,//TODO:<- { PPUMasterSlave = true },
 				PPUControlRegister2(),//R
 				PPUStatusRegister(),
@@ -61,10 +62,47 @@ namespace NESEmulator {
 			| PPUMemoryAddr       = 0x6
 			| PPUMemoryData       = 0x7
 		};
-		public selectPPURegister(addr:ushort) : IRegister[byte] { PPUIO[addr :> int]; }
-		public selectPPURegister(map:PPUMemoryMap) : IRegister[byte]  {	PPUIO[map :> int]; }
+		public selectPPURegister(addr:ushort) : IRegister[byte] { ppuio[addr :> int]; }
+		public selectPPURegister(map:PPUMemoryMap) : IRegister[byte]  {	ppuio[map :> int]; }
 	//apu control register($4000 ~ $4017)
-		private APIControlRegister : APUControl = APUControl();
+		mutable _apuio : array[IRegister[byte]] = array[
+				
+			];
+		public enum APUMemoryMap {
+			| WRITE_SQUARE_1_CONTROL_1 = 0x0
+			| WRITE_SQUARE_1_CONTROL_2 = 0x1
+			| WRITE_SQUARE_1_TIMER_1 = 0x2
+			| WRITE_SQUARE_1_TIMER_2 = 0x3
+
+			| WRITE_SQUARE_2_CONTROL_1 = 0x04
+			| WRITE_SQUARE_2_CONTROL_2 = 0x05
+			| WRITE_SQUARE_2_TIMER_1 = 0x06
+			| WRITE_SQUARE_2_TIMER_2 = 0x07
+
+			| WRITE_TRIANGLE_CONTROL_1 = 0x08
+			| WRITE_TRIANGLE_CONTROL_2_NC = 0x09
+			| WRITE_TRIANGLE_TIMER_1 = 0x0a
+			| WRITE_TRIANGLE_TIMER_2 = 0x0b
+
+			| WRITE_NOISE_CONTROL_1 = 0x0c
+			| WRITE_NOISE_CONTROL_2_NC = 0x0d
+			| WRITE_NOISE_TIMER_1 = 0x0e
+			| WRITE_NOISE_TIMER_2 = 0x0f
+
+			| DMC_CONTROL = 0x10
+			| DMC_VOLUME = 0x11
+			| DMC_ADDR = 0x12
+			| DMC_LENGTH = 0x13
+
+			| NC = 0x14
+
+			| SOUND_CONTROL = 0x15
+
+			| PAD1 = 0x16
+
+			| PAD2 = 0x17
+			| SOUND_FRAME = 0x17
+		};
 
 		private wram  : array[byte] = array(WRAM_SIZE :> int);
 		private apuio : array[byte] = array(APU_PAD_IO_SIZE :> int);

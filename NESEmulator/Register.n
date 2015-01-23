@@ -60,6 +60,15 @@ namespace NESEmulator {
 
 		public GetValue() : byte { reg :> byte }
 		public SetValue(data : byte) : void { reg = data :> StatusRegister }
+
+		public GetNameTableAddress() : ushort { 
+			match((reg & StatusRegister.NameTableAddressH, reg & StatusRegister.NameTableAddressL)) {
+				| (NameTableAddressH, NameTableAddressL) => 0x3200
+				| (NameTableAddressH, _) => 0x2800
+				| (_, NameTableAddressL) => 0x2400
+				| (_, _) => 0x2000
+			}
+		}
 	}
 	//$2001
 	public class PPUControlRegister2 : IRegister[byte] {
@@ -106,54 +115,5 @@ namespace NESEmulator {
 		public SetValue(data : byte) : void { reg = data :> StatusRegister }
 	}
 
-	public class APUControl : IRegister[ushort] {
-		[Flags]
-		public enum StatusRegister {
-			| WRITE_SQUARE_1_CONTROL_1 = 0x1
-			| WRITE_SQUARE_1_CONTROL_2 = 0x2
-			| WRITE_SQUARE_1_TIMER_1 = 0x4
-			| WRITE_SQUARE_1_TIMER_2 = 0x8
-
-			| WRITE_SQUARE_2_CONTROL_1 = 0x10
-			| WRITE_SQUARE_2_CONTROL_2 = 0x20
-			| WRITE_SQUARE_2_TIMER_1 = 0x40
-			| WRITE_SQUARE_2_TIMER_2 = 0x80
-
-			| WRITE_TRIANGLE_CONTROL_1 = 0x100
-			| WRITE_TRIANGLE_CONTROL_2 = 0x200
-			| WRITE_TRIANGLE_TIMER_1 = 0x400
-			| WRITE_TRIANGLE_TIMER_2 = 0x800
-
-			| WRITE_NOISE_CONTROL_1 = 0x1000
-			| WRITE_NOISE_CONTROL_2 = 0x2000
-			| WRITE_NOISE_TIMER_1 = 0x4000
-			| WRITE_NOISE_TIMER_2 = 0x8000
-
-			| PCM_CONTROL = 0x10000
-			| PCM_VOLUME = 0x20000
-			| PCM_ADDR = 0x40000
-			| PCM_LENGTH = 0x80000
-
-			| SPRITE_DMA = 0x100000
-			| SOUND_CONTROL = 0x200000
-
-			| SPECIO_1 = 0x400000
-			| SPECIO_2 = 0x800000
-		};
-		[FlagAccessor (
-			WRITE_SQUARE_1_CONTROL_1, WRITE_SQUARE_1_CONTROL_2, WRITE_SQUARE_1_TIMER_1, WRITE_SQUARE_1_TIMER_2,
-			WRITE_SQUARE_2_CONTROL_1, WRITE_SQUARE_2_CONTROL_2, WRITE_SQUARE_2_TIMER_1, WRITE_SQUARE_2_TIMER_2,
-			WRITE_TRIANGLE_CONTROL_1, WRITE_TRIANGLE_CONTROL_2, WRITE_TRIANGLE_TIMER_1, WRITE_TRIANGLE_TIMER_2,
-			WRITE_NOISE_CONTROL_1, WRITE_NOISE_CONTROL_2, WRITE_NOISE_TIMER_1, WRITE_NOISE_TIMER_2,
-			PCM_CONTROL, PCM_VOLUME, PCM_ADDR, PCM_LENGTH,
-			SPRITE_DMA, SOUND_CONTROL,
-			SPECIO_1, SPECIO_2,
-		flags=WantSetter)]
-		mutable reg : StatusRegister;
-
-		public GetValue() : ushort{ reg :> ushort }
-		public SetValue(data : ushort) : void { reg = data :> StatusRegister }
-
-	}
-
+	//TODO $4000 ~ $4017用のレジスタを作成
 }
